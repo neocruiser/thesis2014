@@ -1,0 +1,189 @@
+.	D	A	B	C	H	E	F	G	
+1	G1	Locus10106	SLC25A15	"solute carrier family 25 (mitochondrial carrier ornithine transporter) member 15"	Q9Y619	.	G1	.	
+2	G2	Locus1037	RPS13	"40s ribosomal protein s13"	P62277	.	.	G2	
+3	G3	Locus11722	ELL	"rna polymerase ii elongation factor ell"	P55199	.	G3	.	
+4	G4	Locus12061	MRC2	"c-type mannose receptor 2"	Q9UBG0	.	.	.	
+5	G5	Locus1216	RPS2	"ribosomal protein s2"	P15880	.	G5	G5	
+6	G6	Locus12283	alpi2	"alkaline phosphatase"	Q4QRJ9	.	G6	.	
+7	G7	Locus12354	SCP	"sarcoplasmic calcium-binding protein"	P04570	.	G7	.	
+8	G8	Locus12534	.	NA	.	.	G8	.	
+9	G9	Locus12710	PCBD2	"pterin-4-alpha-carbinolamine dehydratase-like"	Q9H0N5	.	G9	G9	
+10	G10	Locus12782	DNAJA1	"dnaj homolog subfamily a member 1"	P31689	.	.	.	
+11	G11	Locus1304	CAV1	caveolin-1	Q03135	.	G11	.	
+12	G12	Locus13133	CTSL	"cathepsin L"	P07711	.	.	.	
+13	G13	Locus13263	CYS-PIN	"cysteine protease inhibitor"	Q03196	.	.	.	
+14	G14	Locus13431	ARL6IP4	"adp-ribosylation factor-like protein 6-interacting protein 4"	Q66PJ3	.	.	.	
+15	G15	Locus13523	A-ferritin	"ferritin heavy chain oocyte isoform"	Q7SXA6	.	G15	.	
+16	G16	Locus13953	beg1	Endo-beta-1,3-1,4-glucanase	Q45691	.	G16	G16	
+17	G17	Locus1404	XBP1	"x-box binding"	P17861	.	.	.	
+18	G18	Locus14294	LAMP1	"lysosome-associated membrane glycoprotein 1"	P11279	.	.	.	
+19	G19	Locus15296	MGL-2	"lysozyme 2"	A5LHX1	.	.	.	
+20	G20	Locus15409	CSAD	"cysteine sulfinic acid decarboxylase"	Q9Y600	.	.	.	
+21	G21	Locus15921	cba1	"zinc carboxypeptidase a 1-like"	Q29NC4	.	G21	G21	
+22	G22	Locus15942	nhaX	"stress response protein nhax"	O07552	.	.	.	
+23	G23	Locus15973	SLC27A3	"long-chain fatty acid transport protein 3"	Q5K4L6	.	G23	.	
+24	G24	Locus16026	CTSL	"cathepsin L"	P07711	.	.	.	
+25	G25	Locus16753	C1q3	"c1q domain containing protein 1q3"	F0V440	.	G25	.	
+26	G26	Locus17297	FCER2	"low affinity immunoglobulin epsilon fc receptor"	P06734	.	.	.	
+27	G27	Locus17407	RBKS	ribokinase	Q9H477	.	.	G27	
+28	G28	Locus17419	CALM	calmodulin	P62158	.	G28	G28	
+29	G29	Locus18119	CTSC	"cathepsin c"	P53634	.	G29	.	
+30	G30	Locus18335	ADAMTSL3	"adamts-like protein 3"	P82987	.	G30	.	
+31	G31	Locus18615	odh1	"octopine dehydrogenase"	Q9BHM6	.	.	.	
+32	G32	Locus18662	WDR3	"wd repeat-containing protein 3"	Q9UNX4	.	G32	.	
+33	G33	Locus19549	RWDD4	"rwd domain-containing protein 4"	Q6NW29	.	.	.	
+34	G34	Locus1997	PRKAR2B	"camp-dependent protein kinase regulatory subunit"	P31323	.	.	.	
+35	G35	Locus20132	cre-gst-11	"cre-gst-11 protein"	E3LEU5	G35	.	G35	
+36	G36	Locus20407	C1QL4	"complement c1q-like protein 4-like"	Q86Z23	.	.	.	
+37	G37	Locus20647	HSPA12A	"heat shock 70 kda protein 12a"	O43301	.	G37	.	
+38	G38	Locus21463	MCCA	"methylcrotonoyl-CoA carboxylase subunit beta mitochondrial-like"	Q96RQ3	.	.	.	
+39	G39	Locus2162	COL4A4	"collagen alpha-4 chain"	P53420	.	G39	.	
+40	G40	Locus2170	RPL10	"ribosomal protein l10"	P27635	.	G40	G40	
+41	G41	Locus2223	RPS17L	"40s ribosomal protein s17-like"	P0CW22	.	G41	.	
+42	G42	Locus22403	L3HYPDH	"Trans-L-3-hydroxyproline dehydratase"	Q96EM0	.	.	.	
+43	G43	Locus22719	CD207	"c-type lectin domain family 4 member k-like"	Q9UJ71	.	G43	.	
+44	G44	Locus22745	CACNG5	"voltage-dependent calcium channel gamma-5 subunit"	Q9UF02	.	G44	.	
+45	G45	Locus23275	CHDC2	"calponin homology domain-containing protein 2"	Q8N9S7	.	G45	.	
+46	G46	Locus23293	RPL9	"60s ribosomal protein l9"	P32969	.	G46	.	
+47	G47	Locus23315	vdg3	"Developmentally regulated vdg3"	Q5D218	.	.	.	
+48	G48	Locus2366	CDC42	"Cell division control protein 42"	P60953	.	.	.	
+49	G49	Locus2420	RPS15	"ribosomal protein s15"	P62841	.	.	.	
+50	G50	Locus24214	SDH	"saccharopine dehydrogenase"	K1PXH5	.	G50	.	
+51	G51	Locus24647	ANKRD28	"serine threonine-protein phosphatase 6 regulatory ankyrin repeat subunit a"	O15084	.	G51	.	
+52	G52	Locus2480	COL4A4	"collagen alpha-4 chain"	P53420	.	G52	.	
+53	G53	Locus24874	DIEXF	"digestive organ expansion factor homolog"	Q68CQ4	.	G53	.	
+54	G54	Locus2492	RPS3A	"40s ribosomal protein s3a"	P61247	.	G54	.	
+55	G55	Locus25349	ZNF830	"zinc finger protein 830-like"	Q96NB3	.	G55	.	
+56	G56	Locus25526	RPLP0	"60s acidic ribosomal protein p0"	P05388	.	G56	.	
+57	G57	Locus25673	RPL7	"ribosomal protein l7"	P18124	.	.	.	
+58	G58	Locus25842	GAPDH	"glyceraldehyde-3-phosphate dehydrogenase"	P04406	.	.	.	
+59	G59	Locus26014	.	"perlucin 6"	G5CT94	.	G58	.	
+60	G60	Locus26253	CHIA	"acidic mammalian chitinase-like"	Q9BZP6	G59	G59	G59	
+61	G61	Locus26303	TEP	"thioester-containing protein"	Q9GYW4	.	.	.	
+62	G62	Locus26362	GALM	"aldose 1-epimerase"	Q96C23	.	G61	.	
+63	G63	Locus2642	algL	"alginate lyase"	Q9L7P2	.	.	.	
+64	G64	Locus26434	beg1	Endo-beta-1,3-1,4-glucanase	Q45691	.	.	.	
+65	G65	Locus26643	MPP	"mitochondrial-processing peptidase subunit alpha"	P29677	G64	.	.	
+66	G66	Locus2668	CTSL	"cathepsin L1 partial"	P07711	.	G65	.	
+67	G67	Locus26759	PSPH	"phosphoserine phosphatase"	P78330	.	G66	G66	
+68	G68	Locus26988	ACAN	"aggrecan core protein"	E7ENV9	.	.	.	
+69	G69	Locus27	FABP7	"fatty acid-binding brain"	O15540	.	G68	.	
+70	G70	Locus27119	SLC27A2	"very long-chain acyl-CoA synthetase-like"	O14975	G69	.	G69	
+71	G71	Locus27180	lysg2	"goose-type lysozyme 2"	Q7YXC2	G70	.	.	
+72	G72	Locus27306	DDX1	"ATP-dependent RNA helicase ddx1"	Q92499	G71	G71	G71	
+73	G73	Locus27390	PSMF1	"proteasome inhibitor pi31 subunit"	Q92530	.	.	.	
+74	G74	Locus27877	lysg2	"goose-type lysozyme 2"	Q7YXC2	.	.	.	
+75	G75	Locus27908	dsbA	"disulfide bond formation protein a"	P0A6M2	.	G74	.	
+76	G76	Locus28316	BYSL	bystin	Q13895	.	.	.	
+77	G77	Locus2838	COL4A4	"collagen alpha-4 chain"	P53420	.	G76	.	
+78	G78	Locus28623	NEF-sp	"rna exonuclease nef-sp"	Q96IC2	.	G77	.	
+79	G79	Locus28886	CHRNB4	"neuronal acetylcholine receptor subunit beta-4"	P30926	.	.	.	
+80	G80	Locus29241	GAT2	"sodium and chloride-dependent gaba transporter 2-like"	A6MKG6	.	.	.	
+81	G81	Locus29333	CYB561D2	"cytochrome b561 domain-containing protein 2-like"	O14569	.	G80	.	
+82	G82	Locus29337	CTSB	"cathepsin b"	P07858	G81	G81	G81	
+83	G83	Locus29344	Cvsi2	"serine protease inhibitor cvsi-2"	Q30HU9	.	G82	.	
+84	G84	Locus29837	Plcd1	"1-phosphatidylinositol-4 5-bisphosphate phosphodiesterase delta-1"	P10688	.	G83	.	
+85	G85	Locus30008	PHYH	"phytanoyl-CoA dioxygenase"	O14832	.	G84	.	
+86	G86	Locus30092	GMDS	"gdp-mannose 4,6 dehydratase"	O60547	G85	G85	G85	
+87	G87	Locus30140	nAChR	"nicotinic acetylcholine receptor subunit type e"	Q2XWK8	.	G86	.	
+88	G88	Locus30281	CALM1	"calmodulin 1"	P62158	.	G87	.	
+89	G89	Locus30702	.	NA	.	.	.	.	
+90	G90	Locus30875	CASP2	"caspase-2 isoform x1"	P42575	.	.	.	
+91	G91	Locus30917	ARRDC3	"arrestin domain-containing protein 3"	Q96B67	.	G90	.	
+92	G92	Locus32011	coll4	"short-chain collagen c4"	P18503	.	G91	.	
+93	G93	Locus32298	METTL24	"methyltransferase-like protein 24-like"	Q5JXM2	.	G92	.	
+94	G94	Locus32765	PIWIL1	"piwi-like protein 1"	Q96J94	.	G93	.	
+95	G95	Locus329	RPL27	"60s ribosomal protein l27"	P61353	G94	G94	G94	
+96	G96	Locus32918	2OG	"2og-fe oxygenase"	D5VA68	.	.	.	
+97	G97	Locus33422	.	"perlucin 6"	P82596	.	.	.	
+98	G98	Locus33502	tinc	"protein tincar-like isoform x1"	Q86B91	.	.	.	
+99	G99	Locus33600	SEC23IP	"sec23-interacting protein"	Q9Y6Y8	.	G98	.	
+100	G100	Locus34340	.	NA	.	.	.	.	
+101	G101	Locus34610	gusB	"lysosomal beta-glucuronidase partial"	P08236	.	G100	.	
+102	G102	Locus34647	MNN9	"mannan polymerase complex subunit mnn9"	P53697	.	G101	.	
+103	G103	Locus34664	nrf-6	"nose resistant to fluoxetine protein 6-like"	Q09225	.	.	.	
+104	G104	Locus34982	eIF-3	"eukaryotic translation initiation factor 3 subunit h-like"	Q9Y262	G103	.	G103	
+105	G105	Locus35094	LRP	"low-density lipoprotein receptor-related"	Q07954	.	.	.	
+106	G106	Locus35096	CCOAOMT	"caffeoyl-CoA o-methyltransferase"	Q9XGD6	.	.	.	
+107	G107	Locus35329	COL4A4	"collagen alpha-4 chain"	P53420	.	G106	.	
+108	G108	Locus3535	RPL14	"60s ribosomal protein l14"	P50914	.	G107	.	
+109	G109	Locus3539	FCGBP	"IgGFc-binding protein"	Q9Y6R7	.	.	.	
+110	G110	Locus3552	.	"Fibrinolytic chymotrypsin-like serine proteinase"	.	G109	.	G109	
+111	G111	Locus35558	.	NA	.	.	.	.	
+112	G112	Locus35816	GH	"glycoside hydrolase"	.	.	G111	.	
+113	G113	Locus35855	AGA	N(4)-(Beta-N-acetylglucosaminyl)-L-asparaginase	P20933	.	G112	.	
+114	G114	Locus35893	FIBCD1	"fibrinogen c domain-containing protein 1"	Q8N539	.	G113	.	
+115	G115	Locus36134	tdh	"l-threonine 3-dehydrogenase"	A0Q5K3	.	.	.	
+116	G116	Locus36178	CYGB	cytoglobin	Q8WWM9	.	.	.	
+117	G117	Locus36267	.	"perlucin 1"	P82596	.	.	.	
+118	G118	Locus36280	RPL36A	"ribosomal protein l36a"	P83881	G117	.	G117	
+119	G119	Locus36465	FCGBP	"IgGFc-binding protein"	Q9Y6R7	.	.	.	
+120	G120	Locus36511	PHGDH	"3-phosphoglycerate dehydrogenase"	O43175	.	G119	.	
+121	G121	Locus36616	"Glu I"	beta-1,3-glucanase	Q7XJ83	.	.	.	
+122	G122	Locus369	SELENBP1	"selenium-binding protein 1-like"	Q13228	.	G121	.	
+123	G123	Locus37649	GRHPR	"glyoxylate reductase/hydroxypyruvate reductase"	Q9UBQ7	G122	.	G122	
+124	G124	Locus37729	C1QL3	"complement c1q-like protein 3"	Q5VWW1	.	.	.	
+125	G125	Locus3774	CTRB1	"chymotrypsinogen b-like"	P17538	G124	.	G124	
+126	G126	Locus3791	.	NA	.	.	G125	.	
+127	G127	Locus38005	Cpb1	"zinc carboxypeptidase B-like"	P19223	.	G126	.	
+128	G128	Locus38102	LRP2	"low-density lipoprotein receptor-related protein 2"	P98164	.	G127	.	
+129	G129	Locus38117	.	NA	.	.	G128	.	
+130	G130	Locus3843	CDCA4	"cell division cycle-associated protein 4"	Q9BXL8	.	.	.	
+131	G131	Locus38733	SIGLEC	"sialic acid binding lectin"	Q9Y286	.	G130	.	
+132	G132	Locus39936	WRAP53	"telomerase cajal body protein 1"	Q9BUR4	.	G131	.	
+133	G133	Locus41179	COL1A2	"collagen alpha-2 chain"	P08123	.	G132	.	
+134	G134	Locus41189	c1q3	"c1q domain containing protein 1q3"	F0V440	.	G133	.	
+135	G135	Locus41393	.	NA	.	.	.	.	
+136	G136	Locus42044	unc-9	"innexin unc-9"	O01393	.	G135	.	
+137	G137	Locus42313	pol	"endonuclease-reverse transcriptase"	Q9N9Z1	.	G136	.	
+138	G138	Locus42636	AANAT	"serotonin n-acetyltransferase"	Q16613	.	.	.	
+139	G139	Locus42729	nhaX	"stress response protein nhax"	O07552	.	G138	.	
+140	G140	Locus4376	vdg3	"developmentally-regulated vdg3"	Q5D218	.	.	.	
+141	G141	Locus4443	nrf-6	"nose resistant to fluoxetine protein 6"	Q09225	.	.	.	
+142	G142	Locus4691	PSAP	"proactivator polypeptide"	P07602	.	G141	.	
+143	G143	Locus4844	RPL3	"60s ribosomal protein l3"	P39023	G142	G142	.	
+144	G144	Locus5075	RPS15A	"40s ribosomal protein s15a-like"	P62244	G143	G143	.	
+145	G145	Locus5213	RPL18	"60s ribosomal protein l18"	Q07020	.	G144	.	
+146	G146	Locus5244	DNAH7	"dynein heavy chain 7 axonemal"	Q8WXX0	.	.	.	
+147	G147	Locus5302	NACA	"nascent polypeptide-associated complex subunit alpha"	Q13765	G146	.	.	
+148	G148	Locus554	ODZ3	"Odd oz ten-m homolog 3"	G3CAS9	.	.	.	
+149	G149	Locus5616	COL4A3BP	"collagen type iv alpha-3-binding protein"	Q9Y5P4	G148	G147	.	
+150	G150	Locus600	RPL18A	"60s ribosomal protein l18a"	Q02543	G149	G148	G149	
+151	G151	Locus6087	PLCD3	"1-phosphatidylinositol 4,5-bisphosphate phosphodiesterase delta-3"	Q8N3E9	.	.	.	
+152	G152	Locus6568	.	temptin	B6RB31	.	.	.	
+153	G153	Locus7	MAN2B1	"lysosomal alpha-mannosidase"	O00754	G152	.	.	
+154	G154	Locus7199	XBP1	"x-box binding"	P17861	.	G152	.	
+155	G155	Locus7577	TRHDE	"thyrotropin-releasing hormone degrading enzyme-like"	Q9UKU6	.	.	.	
+156	G156	Locus7928	CETN1	centrin-1	Q12798	.	G154	.	
+157	G157	Locus7976	SAMD8	"sphingomyelin synthase-related 1-like"	Q96LT4	.	.	.	
+158	G158	Locus7990	LGALS8	"lectin galactose binding soluble 8-like"	O00214	.	G156	.	
+159	G159	Locus8036	DAO	"d-amino acid oxidase"	P14920	.	G157	.	
+160	G160	Locus825	INTS9	"integrator complex subunit 9"	Q9NV88	.	G158	.	
+161	G161	Locus8548	RERG	"ras-related and estrogen-regulated growth inhibitor"	Q96A58	.	.	.	
+162	G162	Locus8705	CTSB	"cathepsin b"	P07858	.	.	.	
+163	G163	Locus9323	SBSN	"suprabasin isoform 2"	Q6UWP8	.	.	.	
+164	G164	Locus9414	RPL22L1	"60s ribosomal protein l22-like 1"	Q6P5R6	.	.	.	
+165	G165	Locus9568	CLEC4F	"c-type lectin domain family 4 member f"	Q8N1N0	.	.	.	
+166	G166	NODE_117052_length_199_	pol	"endonuclease-reverse transcriptase"	Q9N9Z1	.	G164	.	
+167	G167	NODE_126300_length_228_	norA	"norsolorinic acid reductase-like isoform x2"	Q00049	.	G165	.	
+168	G168	NODE_150381_length_336_	.	NA	.	.	G166	.	
+169	G169	NODE_153482_length_253_	.	"cupin family protein"	.	.	G167	.	
+170	G170	NODE_163118_length_608_	lysg2	"goose-type lysozyme 2"	Q7YXC2	G169	G168	G169	
+171	G171	NODE_175269_length_307_	CYP4F22	"cytochrome p450 4f22"	Q6NT55	.	G169	.	
+172	G172	NODE_18688_length_410_	GH	"glycoside hydrolase"	.	.	G170	.	
+173	G173	NODE_189264_length_144_	NOS	"nitric oxide synthase"	P29474	G172	G171	.	
+174	G174	NODE_205772_length_187_	NPHP4	nephrocystin-4	O75161	.	G172	.	
+175	G175	NODE_219422_length_71_	.	NA	.	.	G173	.	
+176	G176	NODE_258157_length_189_	apelB	"apextrin-like protein"	G0YL86	.	G174	.	
+177	G177	NODE_261079_length_488_	.	"fad binding domain-containing protein"	Q22YW5	.	.	.	
+178	G178	NODE_317912_length_179_	CHRDL2	"chordin-like protein 2-like"	Q6WN34	.	.	.	
+179	G179	NODE_321421_length_71_	RpL34a	"ribosomal protein l34a"	C1LA13	.	G177	.	
+180	G180	NODE_33188_length_195_	.	"Serine proteinase"	.	.	G178	.	
+181	G181	NODE_348568_length_193_	.	"perlucin 6"	B6RAZ3	.	.	.	
+182	G182	NODE_3800_length_96_	RPS20	"40s ribosomal protein s20"	P60866	.	.	.	
+183	G183	NODE_401906_length_224_	GPX1	"glutathione peroxidase 1"	P07203	.	.	.	
+184	G184	NODE_438658_length_189_	RPL9	"60s ribosomal protein L9"	P32969	.	G182	.	
+185	G185	NODE_445914_length_265_	ATAD2B	"atpase family aaa domain-containing protein 2b-like"	Q9ULI0	.	G183	.	
+186	G186	NODE_4820_length_75_	Rpl34	"60s ribosomal protein l34-like isoform 1"	B2RZD4	.	G184	.	
+187	G187	NODE_9059_length_105_	RPL44	"60s ribosomal protein l44"	Q96499	.	G185	.	
+188	G188	NODE_95951_length_248_	BDH2	"3-hydroxybutyrate dehydrogenase"	Q9BUT1	.	.	.	
