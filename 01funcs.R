@@ -1,3 +1,4 @@
+## updated Wednesday, 12/2013
 ## Functions for R
 ## udpated on Friday, 12/2013
 ## load with C-c C-l in emacs before sessions
@@ -47,11 +48,8 @@ visualize <- function (zscores, sig, type = "feedback")  {
 ## Bagging for Ensemble Learning
 ## Bootstrap aggregation (Bagging) + 1 classifier = RMSE
 bagging <- function(training, testing, m=10, ite=2, meth="svmRadial",gridZ=ctl){
-
 	Predd <- foreach(i=1:ite,.combine=cbind,.packages='caret') %dopar% {
-
 		bagging.index <- sample(1:dim(training)[1], size=floor((nrow(training)/m)))	## vector list
-
 		Train.me <- train(species~.,
 				data=training[bagging.index,],
 				method=meth,
@@ -64,7 +62,6 @@ bagging <- function(training, testing, m=10, ite=2, meth="svmRadial",gridZ=ctl){
 				preProc=c("center","scale")
 				#metric="ROC"
 				)
-
 	predict(Train.me, newdata=testing)
 }
 	rowMeans(Predd)
@@ -80,7 +77,6 @@ bagging <- function(training, testing, m=10, ite=2, meth="svmRadial",gridZ=ctl){
 ##   groupvars: a vector containing names of columns that contain grouping variables
 ##   na.rm: a boolean that indicates whether to ignore NA's
 ##   conf.interval: the percent range of the confidence interval (default is 95%)
-{
 summarySE <- function(data=NULL, measurevar, groupvars=NULL, na.rm=FALSE,
                       conf.interval=.95, .drop=TRUE) {
   require(plyr)
@@ -215,7 +211,5 @@ summarySEwithin <- function(data=NULL, measurevar, betweenvars=NULL, withinvars=
 
   # Combine the un-normed means with the normed results
   merge(datac, ndatac)
-}
-
 }
 

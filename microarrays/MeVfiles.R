@@ -50,7 +50,6 @@ rm(CUST, CUST.t, locus, x, locus.t)
 # (9) notepad++ search: \t\| and replace: \|
 # (10) notepad++ search: (^>.*)\t and replace: \1\r\n
 # (hint) Procedure done once per dataset. Meaning exportID is for all sequences
-
 library(limma)
 setwd("C:/Dropbox/Workshop2013/Work/Microarrays/10- MeV/Gene Selection/")
 ID <- readTargets("exportID.txt")        # containing the 15k annotated Blast2GO sequences
