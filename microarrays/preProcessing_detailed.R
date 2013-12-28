@@ -111,8 +111,8 @@ MA <- normalizeBetweenArrays(v1, method="Tquantile", targets=targets)
 
 ## PLOT (1)
 x11();plotPrintTipLoess(MA)
-plotDensities(MA)
-plotDensities(MA, col="black")
+x11();plotDensities(MA)
+#plotDensities(MA, col="black")
 
 ## PLOT (2)
 x11()
@@ -174,6 +174,7 @@ save(list=ls(pattern=""),file="paper3.Rdata")
 =========================================================================
 #		SECTION --						#
 =========================================================================
+
 ## experimental with Lmfit function (If not interested continue at section 5)
 ## (17) design matrix + linear model (page 53 of limma userguide)
 ## first design (must run contrast.fit)
@@ -184,11 +185,11 @@ colnames(design) <- levels(f)
 design
 
 ## choose one contrast matrix ...
-## Treatment main effect
+## Treatment main effect (Contrast 1)
 cont.matrix <- makeContrasts(Veliger=(Vi-E)+(Vc-T),Pediveliger=(Pi-Vi)+(Pc-Vc),Juvenile=(Ji-Pi)+(Jc-Pc), levels=design)
-## Stage of development main effect
+## Stage of development main effect (Contrast 2)
 cont.matrix <- makeContrasts(Veliger=(Vc+T)-(Vi-E),Pediveliger=(Pc+Vc)-(Pi-Vi),Juvenile=(Jc+Pc)-(Ji-Pi), levels=design)
-## which genes respond differently over time between the two treatments ?
+## which genes respond differently over time between the two treatments ? (Contrast 3)
 cont.matrix <- makeContrasts(Veliger=(Vi-E)-(Vc-T),Pediveliger=(Pi-Vi)-(Pc-Vc),Juvenile=(Ji-Pi)-(Jc-Pc), levels=design)
 ## which genes respond at either stage of the COCKTAIL treatment ?
 ## which genes respond at either stage of the ISO treatment ?
@@ -203,27 +204,12 @@ fit2 <- eBayes(fit2)
 coefTests <- decideTests(fit2)
 vennDiagram(coefTests)
 
-## PLOT histograms
-## (hint) results is the preprocessed dataframe in dataset.R
-require(lattice)
-par(mfrow=c(1,3))
-histogram(~E1+E2+E3+T1+T2+T3, data=results)
-histogram(~Vc1+Vc2+Vc3+Vi1+Vi2+Vi3, data=results)
-histogram(~Pc1+Pc2+Pc3+Pi1+Pi2+Pi3, data=results)
-histogram(~Jc1+Jc2+Jc3+Ji1, data=results)
-
-## PLOT (2) -- experimental
-plot(Vc1~E1, data=results, pch=19, cex=0.5)
-points(results$Vc1, results$T1, pch=19, cex=0.5, col="red")
-
 x11(title="PlotMA of MA linear model");plotMA(fit)
-x <- topTable(fit2, adjust="BH",number=25,coef=1)
+x <- topTable(fit2, adjust="BH",number=25,coef=1)	## coef is dependent on the ncol(contrast.matrix)
 x
 x<-topTable(fit2, adjust="BH",number=400)
 x<-x[!duplicated(x$ProbeName),]
 head(x);tail(x);dim(x)
-setwd("C:\\Dropbox\\Workshop2013\\Work\\R\\datasets\\")
-write.table(x$ProbeName,"ProbeNames_lmfit.txt",sep="\t",quote=F)
 
 ## EXTRACT 2FOLD GENES
 ## (hint) results is the preprocessed dataframe in dataset.R
@@ -240,7 +226,16 @@ logs_2fold <- logs_2fold[! duplicated(logs_2fold[,(dim(logs_2fold)[2]-1)]),]
 cat("\n","Only 2fold minimum expression genes:",dim(logs_2fold)[1],"\n")
 sm <- sample(1:dim(logs_2fold)[1],5)
 logs_2fold[sm,]
+setwd("C:\\Dropbox\\Workshop2013\\Work\\R\\datasets\\")
+write.table(logsLM, "Contrast3.txt", sep="\t", quote=F)
 
+## VENN FOR CONTRAST TESTING
+require(gplots)
+contrast1 <- as.vector(logsLM[,24])
+contrast2 <- as.vector(logsLM[,24])
+contrast3 <- as.vector(logsLM[,24])
+input <- list(Contrast1=contrast1,Contrast2=contrast2,Contrast3=contrast3)
+venn(input)
 
 # (19) add missing columns and build table of all selected genes
 results1 <- MA$genes$ProbeName
@@ -253,9 +248,19 @@ names(results) <- c("cust", "E1", "E2", "E3","T1","T2","T3","Vc1","Vc2","Vc3","P
 setwd("C:\\Dropbox\\Workshop2013\\Work\\R\\datasets\\")
 write.table(results, "resultsCoc_Iso.txt", sep="\t", quote=F)
 
-	# (20) edit output files to load them into MeV
-	#remove quotation marks in notepad++ so as to get just 4 columns (variables) and 4 set of observations
-	#remove numbering search: ^.*(CUST.*$) replace: \1
+## PLOT histograms
+## (hint) results is the preprocessed dataframe in dataset.R
+require(lattice)
+par(mfrow=c(1,3))
+histogram(~E1+E2+E3+T1+T2+T3, data=results)
+histogram(~Vc1+Vc2+Vc3+Vi1+Vi2+Vi3, data=results)
+histogram(~Pc1+Pc2+Pc3+Pi1+Pi2+Pi3, data=results)
+histogram(~Jc1+Jc2+Jc3+Ji1, data=results)
+
+## PLOT (2) -- experimental
+plot(Vc1~E1, data=results, pch=19, cex=0.5)
+points(results$Vc1, results$T1, pch=19, cex=0.5, col="red")
+
 
 # ===========
 ## END
