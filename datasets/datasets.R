@@ -324,9 +324,9 @@ lsos(pat="cluster.*")
 setwd("C:/Dropbox/Workshop2013/Work/R/datasets/weights/")
 N <- read.table("meansLmFitBgmin.txt", sep="\t", header=T)	## W/n+Weight (PAPER 2)
 N <- read.table("meansW2.txt", sep="\t", header=T)		## Bg+W/n+Betw+Weight
+N <- read.table("meansPaper3.txt", sep="\t", header=T)	## W/n+normBet (PAPER 3)
 
 ## Library 1 for subset A, B, C w background correction to minimum | w/o between Arrays normalization | weighted (-1,2)
-{
 setwd("C:/Dropbox/Workshop2013/Work/R/sam/")
 all.set <- read.table("allSet_Lm.txt", sep="\t", header=T)
 setwd("C:/Dropbox/Workshop2013/Work/R/datasets/weights/")
@@ -335,34 +335,28 @@ genes_SIG <- genes_coc[genes_coc$locus %in% all.set$x,]
 rownames(genes_SIG) <- genes_SIG$locus
 species <- as.matrix(t(genes_SIG[,-c(1,2)]))
 dim(species)	#15x3633
-}
+
 
 ## Anova one way results w/ background correction to minimum | w/o between Arrays normalization | weighted (-1,2)
 ## LOAD 5 subsets (from 5 different Templates)
-{
 setwd("C:/Dropbox/Workshop2013/Work/R/ANOVA/")
 anova_template_EGG <- read.table("meansLmFitBgmin_EGG.txt", sep="\t", header=T)
 anova_template_VELI <- read.table("meansLmFitBgmin_VEL.txt", sep="\t", header=T)
 anova_template_JUV <- read.table("meansLmFitBgmin_JUV.txt", sep="\t", header=T)
 lsos(pat="anova_template_.*")
-}
-{
+
 setwd("C:/Dropbox/Workshop2013/Work/R/ANOVA/")
 load("anova.Rdata", .GlobalEnv)
 lsos(pat="nova")
-}
 
 
 ## Transcription factors, kinases, phosphatases, chromatin remodelers
 ## FOR MORE INFO HEAD TO ENRICHMENT
-{
 setwd("C:/Dropbox/Workshop2013/Work/R/enrichment/")
 load("regulators.Rdata", .GlobalEnv)
 lsos(pat="GO2gene_.*|.*_matrix|.*2fold|TF16")
-}
 
 ## SUBSET E
-{
 setwd("C:/Dropbox/Workshop2013/Work/R/enrichment/")
 load("subsetE2.Rdata", .GlobalEnv)
 lsos(pat="GO2gene_.*|.*_matrix|.*setE")
@@ -371,7 +365,7 @@ lsos(pat="GO2gene_.*|.*_matrix|.*setE")
 ## All_matrix & All_matrix2 : combined genes of every search
 ## logsSubsetE & logsSubsetE2 : logs of genes before 2fold filtering
 ## sig_All_matrix : combined genes found in Library1
-}
+
 
 ## NETWORKS EBDBN
 setwd("C:/Dropbox/Workshop2013/Work/R/ebdbn/")

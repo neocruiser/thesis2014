@@ -157,7 +157,7 @@ dim(MA)
 MA <- MA[!MA$genes$SystematicName=="titration", ]
 dim(MA)
 
-## PLOT
+## PLOT after removing NAs and control spots
 windows(width=10, height=15, title="RG plain|nomW()")
 par(mfrow=c(3,2))
 for(i in n){
@@ -185,15 +185,21 @@ colnames(design) <- levels(f)
 design
 
 ## choose one contrast matrix ...
-## Treatment main effect (Contrast 1)
-cont.matrix <- makeContrasts(Veliger=(Vi-E)+(Vc-T),Pediveliger=(Pi-Vi)+(Pc-Vc),Juvenile=(Ji-Pi)+(Jc-Pc), levels=design)
-## Stage of development main effect (Contrast 2)
-cont.matrix <- makeContrasts(Veliger=(Vc+T)-(Vi-E),Pediveliger=(Pc+Vc)-(Pi-Vi),Juvenile=(Jc+Pc)-(Ji-Pi), levels=design)
-## which genes respond differently over time between the two treatments ? (Contrast 3)
+## which genes respond in T, Vc, Pc, and Jc (cocktail) (contrast 1, nestedF)
+cont.matrix <- makeContrasts(Troco=(T-E), Veliger=(Vc-T), Pediveliger=(Pc-Vc), Juvnile=(Jc-Pc), levels=design)
+
+## which genes respond in T, Vi, Pi, and Ji (ISO) (contrast 2, nestedF)
+cont.matrix <- makeContrasts(Troco=(T-E), Veliger=(Vi-T), Pediveliger=(Pi-Vi), Juvnile=(Ji-Pi), levels=design)
+
+## which genes respond differently over time between the two treatments ? (Contrast 3, seperate)
 cont.matrix <- makeContrasts(Veliger=(Vi-E)-(Vc-T),Pediveliger=(Pi-Vi)-(Pc-Vc),Juvenile=(Ji-Pi)-(Jc-Pc), levels=design)
-## which genes respond at either stage of the COCKTAIL treatment ?
-## which genes respond at either stage of the ISO treatment ?
-## which genes differently expressed relatively to EGG phase
+
+## Treatment main effect (Contrast 4, nestedF)
+cont.matrix <- makeContrasts(Veliger=(Vi-E)+(Vc-T),Pediveliger=(Pi-Vi)+(Pc-Vc),Juvenile=(Ji-Pi)+(Jc-Pc), levels=design)
+
+## Stage of development main effect (Contrast 5, nestedF)
+cont.matrix <- makeContrasts(Veliger=(Vc+T)-(Vi-E),Pediveliger=(Pc+Vc)-(Pi-Vi),Juvenile=(Jc+Pc)-(Ji-Pi), levels=design)
+## interaction age-treatment ? (The interaction gives same results as contrast 5)
 
 
 ## Group mean parametrization
@@ -201,18 +207,17 @@ fit <- lmFit(MA,design)
 fit2 <- contrasts.fit(fit, cont.matrix)
 fit2 <- eBayes(fit2)
 ## PLOT VennDiagram
-coefTests <- decideTests(fit2)
+coefTests <- decideTests(fit2,method="nestedF")
 vennDiagram(coefTests)
 
-x11(title="PlotMA of MA linear model");plotMA(fit)
-x <- topTable(fit2, adjust="BH",number=25,coef=1)	## coef is dependent on the ncol(contrast.matrix)
+#x11(title="PlotMA of MA linear model");plotMA(figx <- topTable(fit2, adjust="BH",number=25,coef=1)	## coef is dependent on the ncol(contrast.matrix)
 x
-x<-topTable(fit2, adjust="BH",number=400)
+x<-topTable(fit2, adjust="BH",number=4000)
 x<-x[!duplicated(x$ProbeName),]
 head(x);tail(x);dim(x)
 
-## EXTRACT 2FOLD GENES
-## (hint) results is the preprocessed dataframe in dataset.R
+## EXTRACT 2FOLD GENES from calculated contrast matrix genes (topTable)
+## (hint) results is the preprocessed dataframe in dataset.R, run script first
 names(results)
 logsLM <- results[results$cust %in% x$ProbeName,]
 logsLM <- as.matrix(logsLM)
@@ -227,23 +232,27 @@ cat("\n","Only 2fold minimum expression genes:",dim(logs_2fold)[1],"\n")
 sm <- sample(1:dim(logs_2fold)[1],5)
 logs_2fold[sm,]
 setwd("C:\\Dropbox\\Workshop2013\\Work\\R\\datasets\\")
-write.table(logsLM, "Contrast3.txt", sep="\t", quote=F)
+write.table(logsLM, "Contrast5.txt", sep="\t", quote=F)
 
 ## VENN FOR CONTRAST TESTING
 require(gplots)
 contrast1 <- as.vector(logsLM[,24])
 contrast2 <- as.vector(logsLM[,24])
 contrast3 <- as.vector(logsLM[,24])
-input <- list(Contrast1=contrast1,Contrast2=contrast2,Contrast3=contrast3)
+contrast4 <- as.vector(logsLM[,24])
+contrast5 <- as.vector(logsLM[,24])
+input <- list(Contrast1=contrast1,Contrast2=contrast2,Contrast3=contrast3,Contrast4=contrast4,Contrast5=contrast5)
 venn(input)
 
 # (19) add missing columns and build table of all selected genes
 results1 <- MA$genes$ProbeName
 results2 <- MA$M
-results3 <- cbind(results1, results2)       #merge columns
+results3 <-
+cbind(results1, results2) #merge columns
 colnames(results3) <- MA$genes$names
 results <- data.frame(results3)
-names(results) <- c("cust", "E1", "E2", "E3","T1","T2","T3","Vc1","Vc2","Vc3","Pc1","Pc2","Pc3","Jc1","Jc2","Jc3","Vi1","Vi2","Vi3","Pi1","Pi2","Pi3","Ji1")	## PAPER 3
+names(results) <-c("cust", "E1", "E2","E3","T1","T2","T3","Vc1","Vc2","Vc3","Pc1","Pc2","Pc3","Jc1","Jc2","Jc3","Vi1","Vi2","Vi3","Pi1","Pi2","Pi3","Ji1")
+##PAPER 3
 #names(results) <- c("cust", "E1", "E2", "E3","T1","T2","T3","Vc1","Vc2","Vc3","Pc1","Pc2","Pc3","Jc1","Jc2","Jc3")	## PAPER 2
 setwd("C:\\Dropbox\\Workshop2013\\Work\\R\\datasets\\")
 write.table(results, "resultsCoc_Iso.txt", sep="\t", quote=F)
