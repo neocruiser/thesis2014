@@ -159,6 +159,7 @@ dim(MA)
 
 ## PLOT after removing NAs and control spots
 windows(width=10, height=15, title="RG plain|nomW()")
+n <- seq (1:22)		## since in paper 3 i discarded the last juvenile sample (so 22 samples overall)
 par(mfrow=c(3,2))
 for(i in n){
 	plotMA(MA, array=i)
@@ -185,21 +186,21 @@ colnames(design) <- levels(f)
 design
 
 ## choose one contrast matrix ...
-## which genes respond in T, Vc, Pc, and Jc (cocktail) (contrast 1, nestedF)
+## which genes respond in T, Vc, Pc, and Jc (cocktail) (Setup 1, nestedF)
 cont.matrix <- makeContrasts(Troco=(T-E), Veliger=(Vc-T), Pediveliger=(Pc-Vc), Juvnile=(Jc-Pc), levels=design)
 
-## which genes respond in T, Vi, Pi, and Ji (ISO) (contrast 2, nestedF)
+## which genes respond in T, Vi, Pi, and Ji (ISO) (Setup 2, nestedF)
 cont.matrix <- makeContrasts(Troco=(T-E), Veliger=(Vi-T), Pediveliger=(Pi-Vi), Juvnile=(Ji-Pi), levels=design)
 
-## which genes respond differently over time between the two treatments ? (Contrast 3, seperate)
+## which genes respond differently over time between the two treatments ? (Setup 3, seperate)
 cont.matrix <- makeContrasts(Veliger=(Vi-E)-(Vc-T),Pediveliger=(Pi-Vi)-(Pc-Vc),Juvenile=(Ji-Pi)-(Jc-Pc), levels=design)
 
-## Treatment main effect (Contrast 4, nestedF)
+## Treatment main effect (Setup 4, nestedF)
 cont.matrix <- makeContrasts(Veliger=(Vi-E)+(Vc-T),Pediveliger=(Pi-Vi)+(Pc-Vc),Juvenile=(Ji-Pi)+(Jc-Pc), levels=design)
 
-## Stage of development main effect (Contrast 5, nestedF)
+## Stage of development main effect (Setup 5, nestedF)
 cont.matrix <- makeContrasts(Veliger=(Vc+T)-(Vi-E),Pediveliger=(Pc+Vc)-(Pi-Vi),Juvenile=(Jc+Pc)-(Ji-Pi), levels=design)
-## interaction age-treatment ? (The interaction gives same results as contrast 5)
+## interaction age-treatment ? (The interaction gives same results as Setup 5)
 
 
 ## Group mean parametrization

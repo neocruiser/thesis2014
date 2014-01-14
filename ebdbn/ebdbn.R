@@ -81,7 +81,7 @@ species <- as.longitudinal(NNnormalize, repeats=3, time=c(0,6,12,22,32))
 G <- dataFormat(species)		# Observed Genes
 }
 ==================================RUN(b)
-## SUBSET E 
+## SUBSET E
 ## (GROWTH, DEVELOPMENT, LOCOMOTION, RHYTHMIC)
 ## LOAD SETE
 {
@@ -171,8 +171,8 @@ LoX=c("Locus29915")
 {						## RUN (2)
 hello <- list()
 for(i in 1:length(clusters)) {
-hello[[i]] <- grepl(LoX,clusters[[i]]$x) ; 
-hello[[i]] <- length(which(hello[[i]])) 
+hello[[i]] <- grepl(LoX,clusters[[i]]$x) ;
+hello[[i]] <- length(which(hello[[i]]))
 }
 str(hello)
 }
@@ -180,8 +180,8 @@ str(hello)
 {						## RUN (2) \\ change the suffix to _03, _05 or _06
 hello <- list()
 for(i in 1:length(acore_list01)) {
-hello[[i]] <- grepl(LoX,acore_list01[[i]]$NAME) ; 
-hello[[i]] <- length(which(hello[[i]])) 
+hello[[i]] <- grepl(LoX,acore_list01[[i]]$NAME) ;
+hello[[i]] <- length(which(hello[[i]]))
 }
 str(hello)
 }
@@ -204,7 +204,7 @@ gc()
 network <- ebdbn(input=TF,G,K=3, conv.1=0.15, conv.2=0.05, conv.3=0.001, verbose=T)
 networkH1 <- ebdbn(input=TF,G,K=4, verbose=T)
 networkG12 <- ebdbn(input=TF,G,K=3, conv.1=0.15, conv.2=0.01, conv.3=0.001, verbose=T)
-plot(networkG12, sig.level=0.99, interactive=F, clarify=T,layout = layout.fruchterman.reingold) 
+plot(networkG12, sig.level=0.99, interactive=F, clarify=T,layout = layout.fruchterman.reingold)
 gc()
 ## END
 
@@ -258,7 +258,7 @@ networkF : input | subsetE_2fold | TF17 | 015 001 0001 | k=3 | .99
 ****networkB1 : feedback | all anova | 015 001 0001 | k=3 | .99
 ****networkD1 : feedback | TF2fold | 015 001 0001 | k=3 | .99			## TF found in library 1 and have a minimum of 2 fold change  (61)
 ****networkE3 : input | TF2fold | vs All anova | 015 005 0001 | k=3 | .99
-****networkE4 : input | TF16 | vs All anova | 015 005 0001 | k=3 | .99 | 
+****networkE4 : input | TF16 | vs All anova | 015 005 0001 | k=3 | .99 |
 ****networkF2 : input | subsetE_2fold | TF2fold | 01 001 0001 |  k=4 | .99
 ****networkF1 : input | subsetE_2fold | TF16 |  k=4 | .99		## dont use Gs and TFs in cytoscape they are false (only w/ TF16)
 ****networkG : input | clusters (enriched w MF) | TF16 |  015 001 0001 | k=3 | .99		## dont use Gs and TFs in cytoscape they are false (only w/ TF16)
@@ -408,7 +408,7 @@ node fill colors / Egg / continuous
 node size / averageShortesPAth / Continuous
 
 node fill colors / AverageShortPath / discrete / rainbow
-node label font size / AverageShortPath / discrete / number series / 3 / 3 
+node label font size / AverageShortPath / discrete / number series / 3 / 3
 edge width/ edgeBetweeness / continuous
 edge stroke color (unselected) / interaction / discrete
 
@@ -520,7 +520,7 @@ K <- hankel(y)$dim
 ## Run algorithm
 net <- ebdbn(y = y, K = 0, conv.1 = 0.15, conv.2 = 0.10, conv.3 = 0.10,
     verbose = TRUE)
-plot(net, sig.level=0.99, interactive=F, clarify=T,layout = layout.fruchterman.reingold) 
+plot(net, sig.level=0.99, interactive=F, clarify=T,layout = layout.fruchterman.reingold)
 ####################################################
 ## Calculate sensitivity and specificity at various significance thresholds
 ## Then calculate AUROC

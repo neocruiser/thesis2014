@@ -1,12 +1,7 @@
 # Paul Pavlidis (c) 2003-2010
 
-#########################################################################
-#								SECTION -1-								#
-#########################################################################
-
 ## one way anova
 ## READ data
-{
 setwd("C:/Dropbox/Workshop2013/Work/R/datasets/weights/")
 genes <- read.table("meansLmFitBgmin.txt", sep="\t", header=T, row.names=3)
 sdata <- as.matrix(genes[,3:17])
@@ -18,8 +13,8 @@ species <- gl(2,9,15, label=c("LA","PL"))	## I can replace label by levels()
 sampl <- gl(5,3,15, label=c("E", "T", "V", "P", "J"))
 
 # define ANOVA function
-aof <- function(x) { 
-  m<-data.frame(species, sampl, x); 
+aof <- function(x) {
+  m<-data.frame(species, sampl, x);
   anova(aov(x ~ sampl + species  + sampl*species, m))}
 anovaresults <- apply(sdata, 1, aof)
 pvalues<-data.frame( lapply(anovaresults, function(x) { x["Pr(>F)"][1:3,] }) )
@@ -27,7 +22,7 @@ str(head(pvalues))
 setwd("C:/Dropbox/Workshop2013/Work/R/ANOVA/")
 write.table(t(pvalues), file="anova-results3.txt", quote=F, sep="\t")
 pvalues[,1:5]
-}
+
 
 # Benjamini_Hochberg FDR analysis
 {
@@ -63,7 +58,7 @@ bhthresh <- cbind(regionp, fdr.result)
 write.table(bhthresh, "bhthresh2.txt", sep='\t', quote=F)
 }
 
-## select high pvalues 
+## select high pvalues
 ## ****HOLD*********SET pVALUES (15257*0.0007/nrow(reg.hi.p))
 reg.hi.p <-t(data.frame(pvalues[1, pvalues[1,] < 0.0007]))
 ## Run
@@ -195,8 +190,8 @@ strain <- gl(2,12,24, label=c("129","bl6"))
 region <- gl(6,2,24, label=c("ag", "cb", "cx", "ec", "hp", "mb"))
 
 # define ANOVA function
-aof <- function(x) { 
-  m<-data.frame(strain,region, x); 
+aof <- function(x) {
+  m<-data.frame(strain,region, x);
   anova(aov(x ~ strain + region + strain*region, m))
 }
 
@@ -219,8 +214,8 @@ pvalues <- data.frame(t(temp.2))
 
 # Workaround 2 (also suggested by T. Blackwell). Replace the aof
 # function with the following:
-aof <- function(x) { 
-  m<-data.frame(strain,region, x); 
+aof <- function(x) {
+  m<-data.frame(strain,region, x);
   temp<-anova(aov(x ~ strain + region + strain*region, m))
   temp["Pr(>F)"][1:3,]
 }
@@ -243,7 +238,7 @@ setwd("C:/Dropbox/Workshop2013/Work/R/anova2/")
 write.table(t(pvalues), file="anova-results.txt", quote=F, sep='\t')
 
 
-# Get the genes with good region effect pvalues. # Note: removed sorting 
+# Get the genes with good region effect pvalues. # Note: removed sorting
 reg.hi.p <-t(data.frame(pvalues[2, pvalues[1,] < 0.001 & pvalues[2,] > 0.1]))
 reg.hi.pdata <- sdata[ row.names(reg.hi.p), ]
 
