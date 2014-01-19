@@ -9,6 +9,8 @@
 setwd("C:/Dropbox/Workshop2013/Work/Paramètres Ecophysio/")
 load("biometrics.Rdata", .GlobalEnv)
 lsos(pat="")
+windows(record=T)
+library(ggplot2)
 
 ## DATASET 1
 ## source: C:\Dropbox\Workshop2013\Work\Paramètres Ecophysio\Profil Lipides 2011.xlsx (feuillet: organized)
@@ -22,43 +24,40 @@ indices
 ## Fatty acids dataset (no trocophore, no EGG)
 fattyacids <- read.table("clipboard",sep="\t", header=T)
 fattyacids
-neutral <- fattyacids[-c(1:9),c(3:4,6:15)]
+names(fattyacids)
+neutral <- fattyacids[-c(1:9),-c(1:2,5,20:21)]
 neutral
 
-## in the case of repeated measurements on the same group (e.g., of animals, individuals, cultures, or reactions),
-## CIs or SE bars are irrelevant to comparisons within the same group
-## Read biometrie file
-setwd("C:/Dropbox/Workshop2013/Work/R/Biometrie/")
-biometrie <- read.table("Biometrie.txt", sep="\t", header=T)
-names(biometrie)
-library(ggplot2)
-windows(record=T)
+## DATASET 3
+## source : C:\Dropbox\Workshop2013\Work\Paramètres Ecophysio\Biometrics.xlsx
+biometrics <- read.table("clipboard",sep="\t", header=T)
+summary(biometrics)
+names(biometrics)
 
 ## GROWTH for both diets COC and TISO
-sgrowth <- biometrie[, c(4,6,8)]
-names(sgrowth)
-sgrowth <- sgrowth[complete.cases(sgrowth),]   # Remove NA rows
-		# write.table(sgrowth, "sgrowth.txt", sep="\t")
-DF <- summarySE(sgrowth, measurevar="Growth", groupvars=c("DPF.1","Treatment"))
+growth <- biometrics[biometrics$Variable == "Growth",]
+names(growth)
+growth <- growth[complete.cases(growth),]   # Remove NA rows
+DF <- summarySE(growth[-c(1:3),], measurevar="Physio", groupvars=c("DPF","Treatment"))
 DF
-                                        # Confidence interval of the mean of Mortality
-ggplot(DF, aes(x=DPF.1, y=Growth)) +
-  geom_errorbar(aes(ymin=Growth-se, ymax=Growth+se), width=.4) +
+## order the x axis ascending (very important)
+DF$DPF <- factor(DF$DPF, levels=c("6","8","11","13","15","18","20","22","25"))
+# CONFIDENCE INTERVAL OF THE MEAN OF GROWTH
+ggplot(DF, aes(x=DPF, y=Physio)) +
+  geom_errorbar(aes(ymin=Physio-se, ymax=Physio+se), width=.4) +
   geom_line(aes(group=Treatment)) +
   geom_point(size=4.4, fill="black",aes(shape=Treatment)) +
     theme_bw()
 
 ## Mortality COC and TISO
-names(biometrie)
-survival <- biometrie[, c(4,6,9)]
-names(survival)
-?complete.cases
+survival <- biometrics[biometrics$Variable == "Mortality",]   # Remove NA rows
+head(survival)
 survival <- survival[complete.cases(survival),]   # Remove NA rows
-		# write.table(survival, "survival.txt", sep="\t")
-DF <- summarySE(survival, measurevar="Mortality", groupvars=c("DPF.1","Treatment"))
+DF <- summarySE(survival, measurevar="Physio", groupvars=c("DPF","Treatment"))
+DF$DPF <- factor(DF$DPF, levels=c("1","4","6","8","11","13","15","18","20","22","25"))
 # Confidence interval of the mean of Mortality
-ggplot(DF, aes(x=DPF.1, y=Mortality)) +
-  geom_errorbar(aes(ymin=Mortality-se, ymax=Mortality+se), width=.4) +
+ggplot(DF, aes(x=DPF, y=Physio)) +
+  geom_errorbar(aes(ymin=Physio-se, ymax=Physio+se), width=.4) +
   geom_line(aes(group=Treatment)) +
   geom_point(size=4.4, fill="black",aes(shape=Treatment)) +
     theme_bw()
@@ -210,8 +209,49 @@ ggplot(DFnall, aes(x=samples, y=variable, group=diet)) +
 
 ## save grouped datasets
 setwd("C:/Dropbox/Workshop2013/Work/Paramètres Ecophysio/")
-lsos(pat="indices|fatty.*|neutral|biometrics")
+lsos(pat=".*indices|fatty.*|neutral|biometrics")
 save(list=ls(pattern="indices|fatty.*|neutral|biometrics"),file="biometrics.Rdata")
+
+
+====================
+    Factorial MANOVA
+====================
+
+## source : http://tinyurl.com/y93l9xq
+    ## 2x2 factorial MANOVA
+    ## load datasets
+setwd("C:/Dropbox/Workshop2013/Work/Paramètres Ecophysio/")
+load("biometrics.Rdata", .GlobalEnv)
+lsos(pat=".*indices|fatty.*|neutral|biometrics")
+
+Y <- as.matrix(neutral[,-c(1:2)])
+## transform neutral to a numeric matrix
+
+Diet <- gl(2,9,18, labels=c("COC","Tiso"))
+Time <- gl(3,3,18, labels=c("Veliger","Pediveliger","Juvenile"))
+## create factors for Treatment and Stage of development
+
+X <- as.matrix(neutral[,-c(1:2)])
+neutral.trans <- asin(sqrt(X/100))
+neutral.trans
+## Arcsine transformation of the data to achive constant variance
+Y <- as.matrix(neutral.trans[,c(6:7,16)])
+fit <- manova(Y ~ Diet*Time)				## 2x2 factorial MANOVA
+options(digits=3)
+summary.manova(fit, test="W")				## summary on the pairs of coordinates
+summary.aov(fit)				##summary on the individual coordinates (type I SS)
+## generate summary for ANOVA single entries or MANOVA overall entries (change neutral.trans colmns)
+
+neutral.tukey <- apply(Y, 2, function(x) {
+list(
+fit <- aov(x ~ diet*samples),
+p <- drop1(fit, ~., test="F"),		## type III SS and F test
+print(c("R^2=",p[2,2]/p[2,3])),
+summary(fit),				## type I SS Anova table
+TukeyHSD(fit, ordered=T)
+)})
+## Multiple comparisons
+
 
 ====================
     ## + Diagnostics
@@ -226,19 +266,32 @@ cat("\n R2 represents the % of variance in the response variable accounted for o
 diet <- gl(2,9,18, label=c("COC","Tiso"))
 samples <- gl(3,3,18, label=c("1Veliger", "2Pediveliger", "3Juvenile"))
 
+lsos(pat=".*indices|fatty.*|neutral|biometrics")
+## show DATASETS (created from clipboard, found in the Paramètres Ecophysio (/work directory))
+
 ## All samples + Both treatments
 anova.neutral.all <- apply(neutral[,-c(1:2)], 2, function(x) {
 list(
-fit <- aov(x ~ diet + samples + diet*samples),
+fit <- aov(x ~ diet*samples),
+p <- drop1(fit, ~., test="F"),		## type III SS and F test
+print(c("R^2=",p[2,2]/p[2,3])),
+summary(fit),				## type I SS Anova table
+TukeyHSD(fit, ordered=T)
+)})
+
+## All samples + one treatment
+## COC treatment
+anova.neutral.between <- apply(neutral[,-c(1:2)], 2, function(x) {
+list(
+fit <- aov(x ~ samples + diet),
 p <- drop1(fit, ~., test="F"),
 print(c("R^2=",p[2,2]/p[2,3])),
 summary(fit),
 TukeyHSD(fit, ordered=T)
 )})
 
-## All samples + one treatment
-## COC treatment
-apply(neutral[1:9,-c(1:2)], 2, function(x) {
+## Tiso treatment
+anova.neutral.single.Tiso <- apply(neutral[neutral$Treatment=="Tiso",-c(1:2)], 2, function(x) {
 list(
 fit <- aov(x ~ samples[1:9]),
 p <- drop1(fit, ~., test="F"),
@@ -247,8 +300,8 @@ summary(fit),
 TukeyHSD(fit, ordered=T)
 )})
 
-## Tiso treatment
-apply(neutral[10:18,-c(1:2)], 2, function(x) {
+## Cocktail treatment
+anova.neutral.single.coc <- apply(neutral[neutral$Treatment=="Cocktail",-c(1:2)], 2, function(x) {
 list(
 fit <- aov(x ~ samples[1:9]),
 p <- drop1(fit, ~., test="F"),
@@ -257,38 +310,10 @@ summary(fit),
 TukeyHSD(fit, ordered=T)
 )})
 
-## All samples + Both treatments
-apply(indices, 2, function(x) {
-list(
-fit <- aov(x ~ samples + diet + samples*diet),
-p <- drop1(fit, ~., test="F"),
-print(c("R^2=",p[2,2]/p[2,3])),
-summary(fit),
-TukeyHSD(fit, ordered=T)
-)})
 
-## All samples + one treatment
-## COC treatment
-apply(indices[1:9], 2, function(x) {
-list(
-fit <- aov(x ~ samples[1:9,]),
-p <- drop1(fit, ~., test="F"),
-print(c("R^2=",p[2,2]/p[2,3])),
-summary(fit),
-TukeyHSD(fit, ordered=T)
-)})
-
-## All samples + one treatment
-## Tiso treatment
-apply(indices[10:18], 2, function(x) {
-list(
-fit <- aov(x ~ samples[1:9,]),
-p <- drop1(fit, ~., test="F"),
-print(c("R^2=",p[2,2]/p[2,3])),
-summary(fit),
-TukeyHSD(fit, ordered=T)
-)})
-
+====================
+    Additional tools
+====================
 
 ## Bonferroni correction (multiple comparison) -- It can be used only if the predictor is a 2 levels group (which is only the case for multiple comparison between stages of the same diet treatment= not useful for paper3)
 Neutral_nonMultipleComparison <- apply(neutral[-c(1:2)], 2, function(x) pairwise.t.test(x, samples, p.adj= "none"))
@@ -427,7 +452,7 @@ chisq.test(tbl)
 ## load datasets
 setwd("C:/Dropbox/Workshop2013/Work/Paramètres Ecophysio/")
 load("biometrics.Rdata", .GlobalEnv)
-lsos(pat="")
+lsos(pat=".*indices|fatty.*|neutral|biometrics")
 
 ## Preprocess dataset; Calculate mean FA content across stages of development 'egg inlcuded'
 neutral
@@ -437,111 +462,73 @@ library(plyr)
 means.neut <- ddply(neutral2, .(Treatment,Stage), numcolwise(mean))
 means.neut
 
-## LOAD GRowth and survival datasets for both treatments
-## Growth = X axis
-## Survival = Y axis
-setwd("C:/Dropbox/Workshop2013/Work/R/Biometrie/")
-biometrie <- read.table("Biometrie.txt", sep="\t", header=T)
-names(biometrie)
-
-## DATASET 3
-## source : C:\Dropbox\Workshop2013\Work\Paramètres Ecophysio\Biometrics.xlsx
-biometrics <- read.table("clipboard",sep="\t", header=T)
-summary(biometrics)
-names(biometrics)
-
-
-
-## Datasets
-sgrowth <- biometrie[, c(4,6,8)]
-names(sgrowth)
-survival <- biometrie[, c(4,6,9)]
-names(survival)
-
-summary(sgrowth)
-summary(survival)
 ## Calculate mean Growth
-means.growth <- ddply(sgrowth, .(Treatment,DPF.1), numcolwise(mean))
+growth <- biometrics[biometrics$Variable == "Growth",]
+head(growth)
+means.growth <- ddply(growth, .(Treatment,Stage), numcolwise(mean))
 means.growth
-gm.com <- rbind(c(0,50),				# size of the egg 50µm (?)a
-			apply(subset(gm[gm$DPF.1 %in% c(13,15),]), 2, FUN=mean),
-			apply(subset(gm[gm$DPF.1 %in% c(18,20),]), 2, FUN=mean),
-			gm[gm$DPF.1==25,]); rownames(gm.com) <- stage
 
 ## Calculate mean Survival
-survival <- read.table("survival.txt", sep="\t", header=T)
-sm <- ddply(survival, .(DPF.1), numcolwise(mean))
-sm.com <- rbind(sm[1,],				# size of the egg 5µm (?)
-			apply(subset(sm[sm$DPF.1 %in% c(13,15),]), 2, FUN=mean),
-			apply(subset(sm[sm$DPF.1 %in% c(18,20),]), 2, FUN=mean),
-			sm[sm$DPF.1==25,]); rownames(sm.com) <- stage
-
-
-####old
-
-setwd("C:/Dropbox/Workshop2013/Work/Paramètres Ecopphysio/")
-acids <- read.table("ag.txt", sep="\t", header=T)
-lipid <- read.table("lipid.txt", sep="\t", header=T)
-## Percentages only of neutral lipids
-dataset <- data.frame(AA=acids[c(1:6,10:12,16:18),45],
-					EPA=acids[c(1:6,10:12,16:18),46],
-					DHA=acids[c(1:6,10:12,16:18),47],
-					SFA=acids[c(1:6,10:12,16:18),48],
-					MUFA=acids[c(1:6,10:12,16:18),49],
-					PUFA=acids[c(1:6,10:12,16:18),50],
-					TAG=lipid[c(1:6,10:12,16:18),19],
-					ST=lipid[c(1:6,10:12,16:18),21],
-					AMPL=lipid[c(1:6,10:12,16:18),22],
-					PL=lipid[c(1:6,10:12,16:18),23])
-
-## Means of samples for the same stage
-library(plyr)
-samples <- as.numeric(gl(4,3,12, label=seq(1:4)))
-neut_dd  <- data.frame(samples=samples, dataset)
-dataset <- ddply(neut_dd, .(samples), numcolwise(mean))
-
-stage <- c("Egg", "Veliger", "Pediveliger", "Juvenile")
-rownames(dataset) <- stage ; dataset <- dataset[,-1]
-
-## GRowth
-library(plyr)
-setwd("C:/Dropbox/Workshop2013/Work/R/datasets/")
-stage <- c("Egg", "Veliger", "Pediveliger", "Juvenile")
-growth <- read.table("Growth.txt", sep="\t", header=T)
-gm <- ddply(growth, .(DPF.1), numcolwise(mean))
-gm.com <- rbind(c(0,50),				# size of the egg 50µm (?)a
-			apply(subset(gm[gm$DPF.1 %in% c(13,15),]), 2, FUN=mean),
-			apply(subset(gm[gm$DPF.1 %in% c(18,20),]), 2, FUN=mean),
-			gm[gm$DPF.1==25,]); rownames(gm.com) <- stage
-
-## Survival
-survival <- read.table("survival.txt", sep="\t", header=T)
-sm <- ddply(survival, .(DPF.1), numcolwise(mean))
-sm.com <- rbind(sm[1,],				# size of the egg 5µm (?)
-			apply(subset(sm[sm$DPF.1 %in% c(13,15),]), 2, FUN=mean),
-			apply(subset(sm[sm$DPF.1 %in% c(18,20),]), 2, FUN=mean),
-			sm[sm$DPF.1==25,]); rownames(sm.com) <- stage
+survival <- biometrics[biometrics$Variable == "Mortality",]
+head(survival)
+means.survival <- ddply(survival, .(Treatment, Stage), numcolwise(mean))
+means.survival
 
 ## Standardize x and y
-x <- gm.com[,2]; y <- sm.com[,2]
+x <- means.growth[c(5,2:4),4]
+y <- means.survival[c(5,2:4),4]
 ys <- (y-mean(y))/sd(y)
 xs <- (x-mean(x))/sd(x)
 
 # Transformation (1) double Square root
 # Double square root regressions
-srt.dataset <- dataset^0.25
-d.sqrt <- NULL;var.expl <-NULL
-for(j in 1:ncol(dataset)) {d.sqrt <- rbind(d.sqrt, lm(srt.dataset[,j]~ys+xs)$coefficients)
-				var.expl <- sum(var.expl+var(lm(srt.dataset[,j]~ys+xs)$fitted.values))
-				print(var(lm(srt.dataset[,j]~ys+xs)$fitted.values) / var(srt.dataset[,j]))
-				}
+srt.dataset <- means.neut[c(4,1:3),-c(1:3)]^0.25
+d.sqrt <- NULL
+var.expl <-NULL
+for(j in 1:(dim(means.neut)[2]-3)) {
+    d.sqrt <- rbind(d.sqrt, lm(srt.dataset[,j]~ys+xs)$coefficients)
+    var.expl <- sum(var.expl+var(lm(srt.dataset[,j]~ys+xs)$fitted.values))
+    print(var(lm(srt.dataset[,j]~ys+xs)$fitted.values) / var(srt.dataset[,j]))
+	}
 
 cat("\n",var.expl / sum(apply(srt.dataset,2,var)),"\n")
 summary(lm(srt.dataset~ys + xs))   ## This is where regressed coefficients can be found
 
 plot(xs, ys, xlab = "x*(growth)", ylab = "y*(survival)", type = "n", asp = 1, cex.axis = 0.7, las=1)
-text(xs, ys, labels = rownames(dataset), col = "forestgreen")
-points(xs, ys, labels = rownames(dataset), col = "forestgreen", pch=17)
-text(d.sqrt[,3:2], labels = colnames(dataset[,1:10]), col = "chocolate", font = 4, cex=0.7)
-for(j in 1:ncol(dataset)) arrows(0, 0, 0.95*d.sqrt[j,3], 0.95*d.sqrt[j,2], col = "chocolate", angle = 15, length = 0.1)
+means.neut$Stage <- factor(means.neut$Stage, levels=c("Egg","Veliger","Pediveliger","Juvenile"))
+text(xs, ys, labels = means.neut[c(4,3:1),2], col = "forestgreen")
+points(xs, ys, col = "forestgreen", pch=17, cex=1.5)
+text(d.sqrt[,3:2], labels = colnames(means.neut[,-c(1:3)]), col = "chocolate", font = 4, cex=0.7)
+for(j in 1:(dim(means.neut)[2]-3)) arrows(0, 0, 0.95*d.sqrt[j,3], 0.95*d.sqrt[j,2], col = "chocolate", angle = 15, length = 0.1)
+
+
+
+## Tiso treatment
+## Standardize x and y
+x <- means.growth[c(5,6:8),4]
+y <- means.survival[c(5,6:8),4]
+ys <- (y-mean(y))/sd(y)
+xs <- (x-mean(x))/sd(x)
+
+# Transformation (1) double Square root
+# Double square root regressions
+srt.dataset <- means.neut[c(4,5:7),-c(1:3)]^0.25
+d.sqrt <- NULL
+var.expl <-NULL
+for(j in 1:(dim(means.neut)[2]-3)) {
+    d.sqrt <- rbind(d.sqrt, lm(srt.dataset[,j]~ys+xs)$coefficients)
+    var.expl <- sum(var.expl+var(lm(srt.dataset[,j]~ys+xs)$fitted.values))
+    print(var(lm(srt.dataset[,j]~ys+xs)$fitted.values) / var(srt.dataset[,j]))
+	}
+
+cat("\n",var.expl / sum(apply(srt.dataset,2,var)),"\n")
+summary(lm(srt.dataset~ys + xs))   ## This is where regressed coefficients can be found
+
+plot(xs, ys, xlab = "x*(growth)", ylab = "y*(survival)", type = "n", asp = 1, cex.axis = 0.7, las=1)
+means.neut$Stage <- factor(means.neut$Stage, levels=c("Egg","Veliger","Pediveliger","Juvenile"))
+text(xs, ys, labels = means.neut[c(4,7:5),2], col = "forestgreen")
+points(xs, ys, col = "forestgreen", pch=17, cex=1.5)
+text(d.sqrt[,3:2], labels = colnames(means.neut[,-c(1:3)]), col = "chocolate", font = 4, cex=0.7)
+for(j in 1:(dim(means.neut )[2]-3)) arrows(0, 0, 0.95*d.sqrt[j,3], 0.95*d.sqrt[j,2], col = "chocolate", angle = 15, length = 0.1)
+
 
