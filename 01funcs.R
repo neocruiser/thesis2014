@@ -46,6 +46,7 @@ visualize <- function (zscores, sig, type = "feedback")  {
 
 ## Bagging for Ensemble Learning
 ## Bootstrap aggregation (Bagging) + 1 classifier = RMSE
+## source : (http://tinyurl.com/ljt9f78)
 bagging <- function(training, testing, m=10, ite=2, meth="svmRadial",gridZ=ctl){
 	Predd <- foreach(i=1:ite,.combine=cbind,.packages='caret') %dopar% {
 		bagging.index <- sample(1:dim(training)[1], size=floor((nrow(training)/m)))	## vector list

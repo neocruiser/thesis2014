@@ -57,6 +57,21 @@ head(Profile$resample)
 plot(Profile)
 
 
+====================
+    Visualization of the dataset
+====================
+
+library(AppliedPredictiveModeling)
+transparentTheme(trans=.4)
+## activate plotting theme
+
+head(iris)
+featurePlot(x = iris[,-5],
+            y = iris$Species,
+            plot = "ellipse",
+            auto.key = list(columns=3))
+## scatterplots (source : http://tinyurl.com/k6m6m5r)
+
 =========================================================================
 #								SECTION --								#
 =========================================================================

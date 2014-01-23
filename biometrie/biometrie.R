@@ -34,6 +34,58 @@ biometrics <- read.table("clipboard",sep="\t", header=T)
 summary(biometrics)
 names(biometrics)
 
+## DATASET 4
+All.FA <- read.table("clipboard", sep="\t", header=T)
+names(All.FA)
+
+====================
+    linear regressions
+====================
+plot(biometrics)
+summary(biometrics)
+
+growth <- biometrics[biometrics$Variable == "Growth",]
+growth <- growth[-c(1:3),]
+growth$Treatment <- factor(growth$Treatment,levels=c("Cocktail","Tiso"))
+require(nnet)
+growth$Treatment <- class.ind(growth$Treatment)[,1]
+
+regfit <- function(y,x,...){
+print(summary(...))
+fit <- lm(y~x)
+par(mfrow = c(2,2))
+plot(fit)
+print(summary(fit))
+}
+regfit.int <- function(y,x,z,...){
+print(summary(...))
+fit <- lm(y~x*z)
+par(mfrow = c(2,2))
+plot(fit)
+print(summary(fit))
+}
+
+attach(growth)
+regfit.int(Physio,DPF,Treatment,growth)
+detach(growth)
+## both treatments
+## multiple linear regression
+
+gc <- growth[growth$Treatment == "1",]
+attach(gc)
+regfit(Physio,DPF, gc)
+detach(gc)
+## only cocktail
+## linear regression
+
+
+
+## linear regression
+
+====================
+    Biometric analyses
+====================
+
 ## GROWTH for both diets COC and TISO
 growth <- biometrics[biometrics$Variable == "Growth",]
 names(growth)
@@ -61,6 +113,27 @@ ggplot(DF, aes(x=DPF, y=Physio)) +
   geom_line(aes(group=Treatment)) +
   geom_point(size=4.4, fill="black",aes(shape=Treatment)) +
     theme_bw()
+
+## two-way ANOVA
+
+Y <- biometrics[biometrics$Variable == "Growth",]
+summary(Y)
+head(Y)
+attach(Y)
+## prepare dataset for growth ANOVA
+
+Time <- factor(Stage, levels=c("Egg","Trocophore","Veliger","Pediveliger","Juvenile"))
+Diet <- factor(Treatment, levels=c("Cocktail","Tiso","none"))
+## Prepare two-way ANOVA
+
+nova2way <- aov(Physio ~ Diet*Time, Y)
+detach(Y)
+summary(nova2way)				##type I sequential SS
+drop1(nova2way, ~., test="F")				## type III marginal SS
+TukeyHSD(nova2way)				## multiple comparisons test
+
+layout(matrix(c(1,2,3,4),2,2)) # optional layout
+plot(nova2way) # diagnostic plots
 
 
 ====================
@@ -111,7 +184,7 @@ ggplot(DF, aes(x=samples, y=OR, colour='black', group=diet))+
     scale_y_continuous(limits=c(0, max(DF$OR + DF$se)),				## set y range
                              breaks=.25:25*0.2)+				## for OR ... set tick every .25
     theme_bw()+
-    theme(legend.justification=c(1,0), legend.position=c(1,0))
+    theme(legend.justification=c(1,0), legend.position=c(1,0))e
 
 
 ## Plot neutral elements
@@ -131,12 +204,12 @@ DFnall
 ## plot
 ## just change the DFnall rows from DFnall[1:18,] to DFnall[19:36,] to DFnall[37:60,]
 pd <- position_dodge(.1)
-ggplot(DFnall[37:60,], aes(x=samples, y=effect,  group=interaction(diet,variable)))+
-    geom_errorbar(aes(ymin=effect-se, ymax=effect+se), colour='black', width=.3, position=pd)+
+ggplot(DFnall[37:60,], aes(x=samples, y=means,  group=interaction(diet,variable)))+
+    geom_errorbar(aes(ymin=means-se, ymax=means+se), colour='black', width=.3, position=pd)+
     geom_line(position=pd, aes(colour=diet))+
     geom_point(position=pd, size=4.4,aes(shape=variable), colour="black")+
     xlab("Stages of development (DPF)")+
-    ylab("effect")+
+    ylab("means")+
     scale_colour_hue(name="Treatment",
                      breaks=c("COC", "Tiso"),
                      labels=c('Cocktail', 'Tiso'),
@@ -150,21 +223,21 @@ ggplot(DFnall[37:60,], aes(x=samples, y=effect,  group=interaction(diet,variable
 
 ## plot using lattice
 require(lattice)
-xyplot(effect ~ samples | diet + variable, data=DFnall, type="o", col="black",pch=20, cex=1)
+xyplot(means ~ samples | diet + variable, data=DFnall, type="o", col="black",pch=20, cex=1)
 
 ## plot with scale activated
 ## Plot used for PAPER 3
 require(ggplot2)
 pd <- position_dodge(.1)
 ggplot(DFnall, aes(x=samples, y=variable, group=diet)) +
-    geom_point(aes(size=effect, colour=diet), shape=22, position=pd) +
-    #geom_point(aes(size=effect-se), colour='black', position=pd, alpha=I(.2)) +
+    geom_point(aes(size=means, colour=diet), shape=22, position=pd) +
+    #geom_point(aes(size=means-se), colour='black', position=pd, alpha=I(.2)) +
     scale_size_area(max_size=10) +
     scale_colour_hue(name="Treatment",
                      breaks=c("COC", "Tiso"),
                      labels=c('Cocktail', 'Tiso'),
                      l=40)+
-    ggtitle("The effect of a fatty acid deficit\ntreatment on physiological lipids")+
+    ggtitle("The means of a fatty acid deficit\ntreatment on physiological lipids")+
     theme_bw()+
     theme(legend.justification=c(1,0), legend.position=c(1,0))+
     xlab("Stages of development (DPF)")+
@@ -183,7 +256,7 @@ diet <- gl(1,3,3, label=c("none"))
 DFnall <- NULL
 for(i in 1:(dim(neutral)[2]-2)){
     DF <- summarySE(neutral[,-c(1:2)], measurevar=names(neutral[,-c(1:2)])[i], groupvars=c("samples","diet"))
-    names(DF)[names(DF)== names(neutral[,-c(1:2)])[i]] <- "effect"			## change names of the varaible column
+    names(DF)[names(DF)== names(neutral[,-c(1:2)])[i]] <- "means"			## change names of the varaible column
     DF <- cbind(DF, variable=names(neutral[,-c(1:2)])[i])
     DFnall <- rbind(DFnall, DF)
 }
@@ -193,7 +266,7 @@ DFnall
 require(ggplot2)
 pd <- position_dodge(.1)
 ggplot(DFnall, aes(x=samples, y=variable, group=diet)) +
-    geom_point(aes(size=effect, colour=diet), shape=22, position=pd) +
+    geom_point(aes(size=means, colour=diet), shape=22, position=pd) +
     #geom_point(aes(size=effect-se), colour='black', position=pd, alpha=I(.2)) +
     scale_size_area(max_size=10) +
     scale_colour_hue(name="Treatment",
@@ -209,8 +282,8 @@ ggplot(DFnall, aes(x=samples, y=variable, group=diet)) +
 
 ## save grouped datasets
 setwd("C:/Dropbox/Workshop2013/Work/Paramètres Ecophysio/")
-lsos(pat=".*indices|fatty.*|neutral|biometrics")
-save(list=ls(pattern="indices|fatty.*|neutral|biometrics"),file="biometrics.Rdata")
+lsos(pat=".*indices|fatty.*|neutral|biometrics|*.FA")
+save(list=ls(pattern="indices|fatty.*|neutral|biometrics|.*FA"),file="biometrics.Rdata")
 
 
 ====================
@@ -222,7 +295,7 @@ save(list=ls(pattern="indices|fatty.*|neutral|biometrics"),file="biometrics.Rdat
     ## load datasets
 setwd("C:/Dropbox/Workshop2013/Work/Paramètres Ecophysio/")
 load("biometrics.Rdata", .GlobalEnv)
-lsos(pat=".*indices|fatty.*|neutral|biometrics")
+lsos(pat=".*indices|fatty.*|neutral|biometrics|.*All")
 
 Y <- as.matrix(neutral[,-c(1:2)])
 ## transform neutral to a numeric matrix
@@ -235,12 +308,15 @@ X <- as.matrix(neutral[,-c(1:2)])
 neutral.trans <- asin(sqrt(X/100))
 neutral.trans
 ## Arcsine transformation of the data to achive constant variance
-Y <- as.matrix(neutral.trans[,c(6:7,16)])
+
+### CAhnge colmn in Y
+
+Y <- as.matrix(neutral.trans[,c(c(1:5,8:10))])
 fit <- manova(Y ~ Diet*Time)				## 2x2 factorial MANOVA
 options(digits=3)
 summary.manova(fit, test="W")				## summary on the pairs of coordinates
 summary.aov(fit)				##summary on the individual coordinates (type I SS)
-## generate summary for ANOVA single entries or MANOVA overall entries (change neutral.trans colmns)
+## generate summary for ANOVA single entries or MANOVA overall entries (change neutral.trans colmns)ee
 
 neutral.tukey <- apply(Y, 2, function(x) {
 list(
@@ -252,6 +328,47 @@ TukeyHSD(fit, ordered=T)
 )})
 ## Multiple comparisons
 
+====================
+    Homogeneity of variance
+====================
+
+## source : http://tinyurl.com/y93l9xq
+    ## 2x2 factorial MANOVA
+    ## load datasets
+setwd("C:/Dropbox/Workshop2013/Work/Paramètres Ecophysio/")
+load("biometrics.Rdata", .GlobalEnv)
+lsos(pat=".*indices|fatty.*|neutral|biometrics|.*All")
+
+require(mvnormtest)
+require(HH)
+M <- fattyacids[-c(1:6),c(6:15,23)]
+M <- asin(sqrt(M/100))
+## arcsine transformation
+#M <- log(M)
+#require(vegan)
+#M <- decostand(M, method="log")
+## log transformation
+## Transform matrix to achieve homogenity of variance
+attach(M)
+Time <- factor(fattyacids[-c(1:6),4], levels=c("Egg","Veliger","Pediveliger","Juvenile"))
+#Diet <- factor(fattyacids[-c(1:6),3], levels=c("none","COC","Tiso"))
+## prepare databasea
+
+Y <- t(M)
+mshapiro.test(as.matrix(Y))
+## TEst for multivariate normality
+
+x=OR
+## change x according to the col names of M
+hov(x ~ Time, M)
+hovPlot(x ~ Time, M)
+## graphical test  Homogeneity of variances based on Brown-Forsyth (source: http://tinyurl.com/n9y2f3n)
+fligner.test(x~Time, M)
+## Non parametric test of homogenity of variance
+bartlett.test(x~Time, M)
+## parametric K-sample test of the equality of variance
+
+detach(M)
 
 ====================
     ## + Diagnostics
@@ -309,6 +426,80 @@ print(c("R^2=",p[2,2]/p[2,3])),
 summary(fit),
 TukeyHSD(fit, ordered=T)
 )})
+
+
+==============================
+    Prepare Tables for Paper 3
+==============================
+
+setwd("C:/Dropbox/Workshop2013/Work/Paramètres Ecophysio/")
+load("biometrics.Rdata", .GlobalEnv)
+lsos(pat=".*indices|fatty.*|neutral|biometrics|.*FA")
+
+names(All.FA)
+N <- All.FA[1:6,-c(1:2,5)]
+N
+
+DFnall <- NULL
+for(i in 1:(dim(N)[2]-2)){
+    DF <- summarySE(N, measurevar=names(N[,-c(1:2)])[i], groupvars=c("Treatment"))
+    names(DF)[names(DF)== names(N[,-c(1:2)])[i]] <- "means"			## change names of the varaible column
+    DF <- cbind(DF, variable=names(N[,-c(1:2)])[i])
+    DFnall <- rbind(DFnall, DF)
+}
+DFnall
+    ## Prepare dataset
+## the loop creates a single dataframe of the summary of all variables in neutral
+## Table of Fatty acid composition of microalgal species used in treatement COC and Tiso
+
+head(All.FA)
+Diet <- gl(2,3,6, labels=c("COC","Tiso"))
+N <- All.FA[1:6,-c(1:6)]
+All.FA.bonf <- apply(N, 2, function(x) pairwise.t.test(x, Diet, p.adj= "bonf"))
+All.FA.bonf
+## Bonferroni correction
+## Table of Fatty acid composition of microalgal species used in treatement COC and Tiso
+
+## TABLE 2
+Ncoc <- All.FA[7:18,-c(1:2,5)]
+DFcoc <- NULL
+for(i in 1:(dim(Ncoc)[2]-2)){
+    Ncoc$Stage <- factor(Ncoc$Stage, levels=c("Egg","Veliger","Pediveliger","Juvenile"))
+    DF <- summarySE(Ncoc, measurevar=names(Ncoc[,-c(1:2)])[i], groupvars=c("Stage"))
+    names(DF)[names(DF)== names(Ncoc[,-c(1:2)])[i]] <- "means"			## change names of the varaible column
+    DF <- cbind(DF, variable=names(Ncoc[,-c(1:2)])[i])
+    DFcoc <- rbind(DFcoc, DF)
+}
+DFcoc
+## Cocktail
+## Table for all Fatty acids (SI of paper 3)
+
+Ntiso <- All.FA[19:27,-c(1:2,5)]
+DFtiso <- NULL
+for(i in 1:(dim(Ntiso)[2]-2)){
+    Ntiso$Stage <- factor(Ntiso$Stage, levels=c("Veliger","Pediveliger","Juvenile"))
+    DF <- summarySE(Ntiso, measurevar=names(Ntiso[,-c(1:2)])[i], groupvars=c("Stage"))
+    names(DF)[names(DF)== names(Ntiso[,-c(1:2)])[i]] <- "means"			## change names of the varaible column
+    DF <- cbind(DF, variable=names(Ntiso[,-c(1:2)])[i])
+    DFtiso <- rbind(DFtiso, DF)
+}
+DFtiso
+## Tiso
+## Table for all Fatty acids (SI of paper 3)
+
+names(All.FA)
+N <- All.FA[7:18,-c(1:6)]
+Time <- gl(4,3,12, labels=c("Egg","Veli", "PEdi", "Juv"))
+All.FA.bonf <- apply(N, 2, function(x) pairwise.t.test(x, Time, p.adj= "bonf"))
+All.FA.bonf
+## Multiple comparisons of the means of all fatty acids (cocktail)
+
+names(All.FA)
+N <- All.FA[19:27,-c(1:6)]
+Time <- gl(3,3,9, labels=c("Veli", "Pedi", "Juv"))
+All.FA.bonf <- apply(N, 2, function(x) pairwise.t.test(x, Time, p.adj= "bonf"))
+AA.FA.bonf
+## Multiple comparisons of the means of all fatty acids (cocktail)
 
 
 ====================

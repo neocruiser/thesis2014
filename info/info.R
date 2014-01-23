@@ -56,6 +56,7 @@ sessionInfo()
 gc()						# reallocate RAM to windows
 system.time()				# benchmark a command
 save(list=ls(pattern=".*|.*"),file=".Rdata")	## save
+unlist(strsplit(bingblat$locus, ","))		## unlist and split the content of a column
 
 ## Statistis
 na.rm=T 					# ignore NA values when doing basic stat ie. sd(x, na.rm=T). x is a vector
