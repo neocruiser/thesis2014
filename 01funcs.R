@@ -577,3 +577,28 @@ olBarplot <- function(OLlist=OLlist, mycol="default", margins=c(6, 10, 3, 2), mi
 	barplot(counts, col=mycol, sub=mysub, ...)
 	par(mar=c(5, 4, 4, 2) + 0.1) # Set margins back to default
 }
+
+regfit <- function(y,x,...){
+print(summary(...))
+fit <- lm(y~x)
+par(mfrow = c(2,2))
+plot(fit)
+print(summary(fit))
+}
+regfit.int <- function(y,x,z,...){
+print(summary(...))
+fit <- lm(y~x*z)
+par(mfrow = c(2,2))
+plot(fit)
+print(summary(fit))
+}
+## Linear regression wrap up functions
+
+
+
+
+
+
+
+
+

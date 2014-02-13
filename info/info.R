@@ -57,6 +57,7 @@ gc()						# reallocate RAM to windows
 system.time()				# benchmark a command
 save(list=ls(pattern=".*|.*"),file=".Rdata")	## save
 unlist(strsplit(bingblat$locus, ","))		## unlist and split the content of a column
+?relevel				# restructure a factor
 
 ## Statistis
 na.rm=T 					# ignore NA values when doing basic stat ie. sd(x, na.rm=T). x is a vector
@@ -92,6 +93,8 @@ LETTERS[1:10]				# create a vector of letters. use in labels (plot)
 setwd("C:/Dropbox/Workshop2013/Work/R/ebdbn/")
 load("networks.Rdata", .GlobalEnv)
 lsos(pat="")
+lm() is the same as glm()				## linear regression
+glm(..., family = binomial)				## logistic regresion
 
 ## Application
 linear vs non linear = linear (= the number on the axis increase equally) nonlinear (they increase nonlinearly)

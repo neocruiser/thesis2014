@@ -94,7 +94,7 @@ data(spam, package="kernlab")
 NN=spam[1:2000,]
 
 ## create binary dataset
-x = Smarket				## original dataset
+x = market				## original dataset
 ## choose this "for classification"
 NN <- data.frame(x[,-dim(x)[2]], species=x[,dim(x)[2]])		## all dataset categorical (class)
 # OR this "for regression"
@@ -542,7 +542,7 @@ cat('\nComputeRMSE','\nRMSE=',
 Predd <- predict(bglmTrain, newdata=testing, type="prob")
 colAUC(Predd, testing, plot=T)
 
-## COMPUTE A CONFUSION MATRIX
+## COMPUTE A CONFUSION MATRIX (very important cf. 04-7 slide 32 of ch4 statlearning)
 confusionMatrix(data=bglmTest, testing$species)
 
 
@@ -699,8 +699,109 @@ corrplot(data.cor, order="hclust")
 
 
 
+====================
+    stat LEARNING
+====================
 
+## source Video 0.4.1 Classification in R ch4 from StatLearning
+data(Smarket, package="ISLR") ## binary categorical
+pairs(Smarket, col=Smarket$Direction)
+cor(Smarket[,-9])
+glm.fit <- glm(Direction~Lag1+Lag2+Lag3+Lag4+Lag5+Volume, data = Smarket, family = binomial)
+summary(glm.fit)
+glm.probs <- predict(glm.fit, type="response")
+glm.pred <- ifelse(glm.probs>0.5, "Up","Down")
+attach(Smarket)
+table(glm.pred, Direction)
+mean(glm.pred==Direction)
+par(mfrow = c(2,2))
+plot(glm.fit)
+## prediction for a binomial classification (logistic regression)
 
+train <- Year<2005
+str(train)
+glm.fit <- glm(Direction~Lag1+Lag2, data = Smarket, family = binomial, subset=train)
+glm.probs <- predict(glm.fit, newdata=Smarket[!train,], type = "response")
+glm.pred <- ifelse(glm.probs>0.5, "Up","Down")
+table(glm.pred, Direction[!train])
+mean(glm.pred==Direction[!train])
+## make a training and testing set
+
+require(MASS)
+lda.fit <- lda(Direction~Lag1+Lag2, data=Smarket, subset=Year<2005)
+lda.fit
+plot(lda.fit)
+Smarket.2005 <- subset(Smarket, Year==2005)
+lda.pred <- predict(lda.fit, Smarket.2005)
+head(data.frame(lda.pred))
+table(lda.pred$class, Smarket.2005$Direction)
+mean(lda.pred$class==Smarket.2005$Direction)
+## Linear Discriminat analysis LDA
+
+require(class)
+Xlag <- cbind(Lag1, Lag2)
+train <- Year<2005
+knn.pred <- knn(Xlag[train,], Xlag[!train,], Direction[train], k=3)
+table(knn.pred, Direction[!train])
+mean(knn.pred==Direction[!train])
+detach(Smarket)
+## K-nearest neighbor
+
+library(ISLR)
+set.seed(123)
+train <- sample(1:392,196)
+lm.fit <- lm(mpg~horsepower, data = Auto, subset = train)
+attach(Auto)
+mean((mpg-predict(lm.fit, Auto))[-train]^2)
+lm.fit2 <- lm(mpg~poly(horsepower,2), data = Auto, subset=train)
+mean((mpg-predict(lm.fit2, Auto))[-train]^2)
+lm.fit3 <- lm(mpg~poly(horsepower,3), data = Auto, subset=train)
+mean((mpg-predict(lm.fit3, Auto))[-train]^2)
+##the validation set approach
+
+require(boot)
+glm.fit <- glm(mpg~horsepower, data=Auto)	## i used glm to do a linear regression & is used w/ cv.glm
+cv.err <- cv.glm(Auto, glm.fit)
+cv.err$delta
+# example 1 of LOOCV
+
+cv.err <- rep(1:5)
+for(i in 1:5){
+glm.fit <- glm(mpg~poly(horsepower, i), data = Auto)
+cv.err[i] <- cv.glm(Auto, glm.fit)$delta[1]
+}
+cv.err
+## Leave one out cross validation (LOOCV)
+
+cv.err <- rep(1:10)
+for(i in 1:10){
+glm.fit <- glm(mpg~poly(horsepower, i), data = Auto)
+cv.err[i] <- cv.glm(Auto, glm.fit, K=10)$delta[1]
+}
+cv.err
+## K-fold cross validation
+
+require(boot)
+boot.fn <- function(data, index){
+return(coef(lm(mpg~horsepower, data = Auto, subset=index)))}
+boot.fn(Auto, 1:392)
+boot.fn(Auto, sample(392,392, replace = T))
+boot(Auto, boot.fn, 1000)
+## Bootstrap (linear regression)
+
+boot.fn <- function(data, index)
+    return(coef(lm(mpg~horsepower+I(horsepower^2), data = Auto, subset=index)))
+set.seed(1)
+boot(Auto, boot.fn, 1000)
+summary(lm(mpg~horsepower+I(horsepower^2),data = Auto))$coefficients
+## Bootstrap (polynomial)
+
+set.seed(123)
+x <- rnorm(100)
+y <- rnorm(100)
+y <- x-2*x^2+rnorm(100)
+plot(x,y)
+## Simulated data set
 
 
 

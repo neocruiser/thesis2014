@@ -9,6 +9,7 @@
 setwd("C:/Dropbox/Workshop2013/Work/Paramètres Ecophysio/")
 load("biometrics.Rdata", .GlobalEnv)
 lsos(pat="")
+
 windows(record=T)
 library(ggplot2)
 
@@ -39,48 +40,102 @@ All.FA <- read.table("clipboard", sep="\t", header=T)
 names(All.FA)
 
 ====================
-    linear regressions
+    linear regressions Diagnostics
 ====================
+
 plot(biometrics)
 summary(biometrics)
 
 growth <- biometrics[biometrics$Variable == "Growth",]
 growth <- growth[-c(1:3),]
+
 growth$Treatment <- factor(growth$Treatment,levels=c("Cocktail","Tiso"))
 require(nnet)
 growth$Treatment <- class.ind(growth$Treatment)[,1]
 
-regfit <- function(y,x,...){
-print(summary(...))
-fit <- lm(y~x)
-par(mfrow = c(2,2))
-plot(fit)
-print(summary(fit))
-}
-regfit.int <- function(y,x,z,...){
-print(summary(...))
-fit <- lm(y~x*z)
-par(mfrow = c(2,2))
-plot(fit)
-print(summary(fit))
-}
+survival <- biometrics[biometrics$Variable == "Mortality",]
+survival$Stage <- factor(survival$Stage, levels = c("Trocophore","Veliger","Pediveliger","Juvenile"))
+survival$Treatment <- factor(survival$Treatment, levels = c("Cocktail","Tiso"))
+summary(survival)
 
+## Make sure to load in the 01funcs.R
 attach(growth)
 regfit.int(Physio,DPF,Treatment,growth)
 detach(growth)
 ## both treatments
 ## multiple linear regression
 
+## source "http://tinyurl.com/mmfwon2"
+require(car)
+require(MASS)
+fit <- lm(Physio~DPF*Treatment, data = growth)
+contrasts(growth$Treatment)
+anova(fit)
+spreadLevelPlot(fit, main = "studentized residuals vs fitted values")
+outlierTest(fit)	## bonferonni p value for most extreme observations
+X <- growth[-c(338,397,639,636,378,677,1265),]		## rowname(outlier)-3 (because i removed earlier 3 egg samples)
+fit <- lm(Physio~DPF*Treatment, data = X)
+outlierTest(fit)	## bonferonni p value for most extreme observations
+summary(fit)
+confint(fit)	## confidence intervals
+ncvTest(fit) 	## non constant variance of the error terms (if <.05 non constant == bad)
+leveragePlots(fit)	## leverage Plots
+influencePlot(fit, id.method = "identify",sub="circle size is proportional to Cooks distance")
+cutoff <- 4/((nrow(growth)-length(fit$coefficients)-2))
+plot(fit, which=4, cook.levels = cutoff)	## identify D values
+qqPlot(fit, main = "QQ plot")	## qq plot for studentized residuals
+windows();par(mfrow = c(2,2))
+plot(fit)
+s.res <- studres(fit)
+hist(s.res, freq = F, main = "Dstribution of studentized residuals")
+xfit <- seq(min(s.res), max(s.res),length=40)
+yfit <- dnorm(xfit)
+lines(xfit,yfit)
+vif(fit)	## test of multi collinearity (correlated predictors)
+plot(predict(fit),rstudent(fit))	## plot the studentized residuals
+## diagnostics
+
+fit <- lm(Physio~Treatment*I(DPF^2),data=growth)	## introduce a quadratic term to a predictor
+summary(fit)
+anova(fit)
+windows();par(mfrow = c(2,2))
+plot(fit)
+
+
 gc <- growth[growth$Treatment == "1",]
 attach(gc)
 regfit(Physio,DPF, gc)
 detach(gc)
-## only cocktail
+## only cocktaila
 ## linear regression
+## linear regression for growth and survival
+
+x <- subset(growth, Stage=='Juvenile')
+summary(x)
+
+par(mfrow = c(2,2))
+boxplot(Physio~Stage, data=growth[growth$Treatment == "Cocktail",])
+boxplot(Physio~Stage, data=growth[growth$Treatment == "Tiso",])
+boxplot(Physio~DPF*Treatment, data=growth, col=(c("grey","grey","grey","grey","chocolate","chocolate","chocolate","chocolate")))
+boxplot(Physio~DPF*Treatment, data=survival, col=(c("grey","grey","grey","grey","chocolate","chocolate","chocolate","chocolate")))
+boxplot(Physio~DPF, data=growth[growth$Treatment == "Cocktail",])
+## boxplots of the function Growth(treatment)
+## summary of the distribution
 
 
 
-## linear regression
+neutral
+neutral.fit <- lm(AA~Stage*Treatment, data=neutral)
+contrasts(neutral$Stage)
+contrasts(neutral$Treatment)
+cor(neutral[,-c(1:2)])
+plot(neutral$AA)
+summary(neutral.fit)
+plot(neutral.fit)
+## lm on neutral
+
+
+
 
 ====================
     Biometric analyses
@@ -302,16 +357,20 @@ Y <- as.matrix(neutral[,-c(1:2)])
 
 Diet <- gl(2,9,18, labels=c("COC","Tiso"))
 Time <- gl(3,3,18, labels=c("Veliger","Pediveliger","Juvenile"))
-## create factors for Treatment and Stage of development
+samples <- gl(3,3,18, label=c("1Veliger", "2Pediveliger", "3Juvenile"))
+## create factors for Treatment and Stage of developmente
 
-X <- as.matrix(neutral[,-c(1:2)])
+colnames(Y)
+X <- as.matrix(Y[,-15])
 neutral.trans <- asin(sqrt(X/100))
-neutral.trans
-## Arcsine transformation of the data to achive constant variance
+#neutral.trans <- scale(X)	## standardize the means and variance
+var(neutral.trans[,1])
+## Arcsine transformation of the data to acheave constant variance
 
-### CAhnge colmn in Y
+### CAhnge colmn in Y in order to make multiple MANOVAS
 
-Y <- as.matrix(neutral.trans[,c(c(1:5,8:10))])
+colnames(neutral.trans)
+Y <- as.matrix(neutral.trans[,c(1:5)])
 fit <- manova(Y ~ Diet*Time)				## 2x2 factorial MANOVA
 options(digits=3)
 summary.manova(fit, test="W")				## summary on the pairs of coordinates
@@ -320,13 +379,14 @@ summary.aov(fit)				##summary on the individual coordinates (type I SS)
 
 neutral.tukey <- apply(Y, 2, function(x) {
 list(
-fit <- aov(x ~ diet*samples),
+fit <- aov(x ~ Diet*samples),
 p <- drop1(fit, ~., test="F"),		## type III SS and F test
 print(c("R^2=",p[2,2]/p[2,3])),
 summary(fit),				## type I SS Anova table
 TukeyHSD(fit, ordered=T)
 )})
 ## Multiple comparisons
+
 
 ====================
     Homogeneity of variance
