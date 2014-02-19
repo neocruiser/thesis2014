@@ -58,6 +58,8 @@ system.time()				# benchmark a command
 save(list=ls(pattern=".*|.*"),file=".Rdata")	## save
 unlist(strsplit(bingblat$locus, ","))		## unlist and split the content of a column
 ?relevel				# restructure a factor
+require(plot3D); example(scatter3D)	## plot in 3D
+
 
 ## Statistis
 na.rm=T 					# ignore NA values when doing basic stat ie. sd(x, na.rm=T). x is a vector
@@ -83,6 +85,7 @@ cov.wt()					# covariance and mean calculator + they can be  weighted
 paste("g",as.character(1:10),sep="")		## Add number to letter
 letters[1:10]				# generate letters
 gl(n,k,n*k, label=)			# n=level, k=replipaction, n*k=length of the result	(FACTOR)
+sum(is.na(colname))			## count how many misssing observations
 
 ## DATA
 factor = is a data frame with characters and numeric

@@ -594,6 +594,14 @@ print(summary(fit))
 }
 ## Linear regression wrap up functions
 
+predict.regsubsets <- function(object, newdata, id, ...){
+form <- as.formula(object$call[[2]])
+mat <- model.matrix(form, newdata)
+coefi <- coef(object, id=id)
+mat[,names(coefi)]%*%coefi
+}
+## source 06-3-R for forward and backward subset selection form Stat learning ch6
+
 
 
 
