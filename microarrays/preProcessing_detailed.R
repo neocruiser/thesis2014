@@ -248,18 +248,18 @@ venn(input)
 # (19) add missing columns and build table of all selected genes
 results1 <- MA$genes$ProbeName
 results2 <- MA$M
-results3 <-
-cbind(results1, results2) #merge columns
+results3 <- cbind(results1, results2) #merge columns
 colnames(results3) <- MA$genes$names
 results <- data.frame(results3)
-names(results) <-c("cust", "E1", "E2","E3","T1","T2","T3","Vc1","Vc2","Vc3","Pc1","Pc2","Pc3","Jc1","Jc2","Jc3","Vi1","Vi2","Vi3","Pi1","Pi2","Pi3","Ji1")
+names(results) <-c("cust", "E1", "E2","E3","T1","T2","T3","VC1","VC2","VC3","PC1","PC2","PC3","JC1","JC2","JC3","VT1","VT2","VT3","PT1","PT2","PT3","JT1")
 ##PAPER 3
 #names(results) <- c("cust", "E1", "E2", "E3","T1","T2","T3","Vc1","Vc2","Vc3","Pc1","Pc2","Pc3","Jc1","Jc2","Jc3")	## PAPER 2
 setwd("C:\\Dropbox\\Workshop2013\\Work\\R\\datasets\\")
-write.table(results, "resultsCoc_Iso.txt", sep="\t", quote=F)
+write.table(results, "22samples15K.txt", sep="\t", quote=F)
 
 ## PLOT histograms
 ## (hint) results is the preprocessed dataframe in dataset.R
+
 require(lattice)
 par(mfrow=c(1,3))
 histogram(~E1+E2+E3+T1+T2+T3, data=results)

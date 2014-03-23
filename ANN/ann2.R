@@ -36,11 +36,15 @@ data(Smarket, package="ISLR") ## binary categorical
 set.seed(34)
 ## classification only
 nbFuncs$summary <- twoClassSummary
-treebagFuncs$summary <- twoClassSummary
+treebagFuncs$summary <- defaultSummary
 rfFuncs$summary <- twoClassSummary
+lmFuncs$summary <- defaultSummary
 gamFuncs$summary <- twoClassSummary
-ctrl <- rfeControl(functions=treebagFuncs, method="repeatedcv", repeats=3, verbose=F)
-Profile <- rfe(Caravan[,-c(1:30,50:60,86)], Caravan[,86], sizes=c(20,30,40,50), rfeControl=ctrl, metric="ROC")
+ctrl <- rfeControl(functions=ldaFuncs, method="repeatedcv", repeats=3, verbose=F)
+Profile <- rfe(irisdata[,-5], irisdata[,5], sizes=c(1:4),rfeControl=ctrl, metric="RMSE")
+Profile
+predictors(Profile)
+plot(Profile, type="b")
 
 ## Regression only
 ## create dummy dependent variables
@@ -278,7 +282,7 @@ confusionMatrix(data=rfTest, testing$species)
 
 
 
-#### Boosted trees ((D)) ---- Generalized Boosted Regression Model
+#### Boosted trees ((D)) ---- Generalized Boosted Regression Model (multinomial classification)
 set.seed(21)
 #training
 gbmTrain <- train(species~.,
@@ -581,7 +585,7 @@ getDoParWorkers()
 getDoParName()
 getDoParVersion()
 
-cl <- makeCluster(4)
+cl <- makeCluster(1)
 registerDoSNOW(cl)
 
 ctl=expand.grid(.C=2.2, .sigma=0.27)	## svmRadial
@@ -598,7 +602,7 @@ svmbag <- bagging(training,testing,m=10,ite=5000,meth="nnet",gridZ=ctl)
 ## END RUN
 sqrt((sum((testing$species - svmbag)^2))/nrow(testing))		## compute RMSE
 
-stopCluster(cl)		## close cluster only after finishing w all models
+stopCluster(cl)		## close cluster only after finishing w all modelse
 
 ## COMPUTE RMSE
 ensemble.pred <- (gbbag+rfbag)/2
@@ -696,13 +700,63 @@ corrplot(data.cor, order="hclust")
 
 
 
+##############################
+## Custom caret function
+##############################
+
+pls_bo <- list(label = "PLS-BO",
+               library = c("pls", "gbm"),
+               type = "Classification",
+               ## Tune over both parameters at the same time
+               parameters = data.frame(parameter = c('ncomp', 'n.trees','interaction.depth','shrinkage','distribution'),
+                                       class = c("numeric", 'numeric','numeric','numeric','numeric','character'),
+                                       label = c('#Components',
+                                                 '#Randomly Selected Predictors')),
+               grid = function(x, y, len = NULL) {
+                 grid <- expand.grid(ncomp = seq(1, min(ncol(x) - 1, len), by = 1))
+               },
+               loop = NULL,
+               fit = function(x, y, wts, param, lev, last, classProbs, ...) {
+                 ## First fit the pls model, generate the training set scores,
+                 ## then attach what is needed to the random forest object to
+                 ## be used later
+                 ## plsr only has a formula interface so create one data frame
+                 dat <- x
+                 dat$y <- y
+                 pre <- plsr(y~ ., data = dat, ncomp = param$ncomp)
+                 scores <- predict(pre, x, type = "scores")
+                 colnames(scores) <- paste("score", 1:param$ncomp, sep = "")
+		dat <- scores
+                 dat$y <- y
+                 mod <- gbm(y~.,data=dat, distribution = param$distribution, n.trees = param$n.trees, interaction.depth = 		param$interaction.depth, ...)
+                 mod$projection <- pre$projection
+                 mod
+               },
+               predict = function(modelFit, newdata, submodels = NULL) {
+                 ## Now apply the same scaling to the new samples
+                 scores <- as.matrix(newdata)  %*% modelFit$projection
+                 colnames(scores) <- paste("score", 1:ncol(scores), sep = "")
+                 ## Predict the random forest model
+                 predict(modelFit, scores)
+               },
+               prob = NULL,
+               varImp = NULL,
+               predictors = function(x, ...) rownames(x$projection),
+               levels = function(x) x$obsLevels,
+               sort = function(x) x[order(x[,1]),])
+## BAGGING
 
 
 
 
-====================
+
+
+
+
+
+==============================
     stat LEARNING
-====================
+==============================
 
 ## source Video 0.4.1 Classification in R ch4 from StatLearning
 data(Smarket, package="ISLR") ## binary categorical
@@ -780,7 +834,7 @@ glm.fit <- glm(mpg~poly(horsepower, i), data = Auto)
 cv.err[i] <- cv.glm(Auto, glm.fit, K=10)$delta[1]
 }
 cv.err
-## K-fold cross validation
+## K-fold cross validatione
 
 require(boot)
 boot.fn <- function(data, index){
@@ -912,6 +966,7 @@ y <- Hitters$Salary
 ## Prepare data for glmnet()
 grid <- 10^seq(10,-2,length=100)
 ridge.mod <- glmnet(x, y, alpha=0, lambda=grid, standardize = T)	## alpha=1 lasso =0 ridge regression
+plot(ridge.mod, , xvar="lambda", label=T)
 dim(coef(ridge.mod))
 ## shrinkage of 20 predictors over 100 lambda
 names(ridge.mod)
@@ -928,6 +983,7 @@ test <- (-train)
 y.test <- y[test]
 ## prepare datasets to compute test MSE of the ridge regression
 ridge.mod <- glmnet(x[train,], y[train], alpha = 0, lambda=grid, thresh = 1e-12)
+plot(ridge.mod, xvar="lambda", label=T)
 ridge.pred <- predict(ridge.mod, s=4, newx=x[test,])
 mean((ridge.pred-y.test)^2)
 ridge.pred <- predict(ridge.mod, s=0, newx=x[test,], exact=T)	## to predict with a lambda of 0
@@ -951,13 +1007,17 @@ predict(out, type="coefficients", s=best.lambda)[1:20,]
 ## Ridge regression (shrinkage)
 
 lasso.mod <- glmnet(x[train,], y[train], alpha = 1, lambda=grid)
-plot(lasso.mod)
+plot(lasso.mod, xvar="lambda", label=T)
+plot(lasso.mod, xvar="dev", label=T) 	## fraction deviance explained =R2
 set.seed(3)
 cv.out <- cv.glmnet(x[train,], y[train],alpha=1)
 plot(cv.out)
 bestlambda <- cv.out$lambda.min
+coef(cv.out, s=bestlambda)
 lasso.pred <- predict(lasso.mod, s=bestlambda, newx=x[test,])
 mean((lasso.pred-y[test])^2)
+rmse <- sqrt(apply((y[test]-lasso.pred)^2,2, mean))
+plot(log(lasso.mod$lambda), rmse, type="b",xlab = "log(lambda)")
 out <- glmnet(x, y, alpha=1)
 lasso.coef <- predict(out, s=bestlambda, type="coefficients")[1:20,]
 lasso.coef
@@ -965,10 +1025,10 @@ lasso.coef[lasso.coef!=0]
 ## lasso (shrinkage)
 
 x <- rnorm(100)
-y <- 2+x^2
+y <- 5+2x-4x2
 fit <- lm(y~x)
 plot(y~x, col="chocolate",pch=20)
-abline(fit,col="forestgreen",lwd=1)
+abline(fit,col="forestgreen",lwd=2)
 pred <- predict(fit)
 segments(x,y,x,pred, lty="dashed")
 points(x,pred,pch=4,cex=.5)
@@ -1016,6 +1076,278 @@ summary(pls.fit)
 ## Partial least squares
 
 
+library(ISLR)
+attach(Wage)
+fit <- lm(wage~poly(age, 4),data=Wage)
+coef(summary(fit))
+## fit an orthgonal polynomial model
+fit2 <- lm(wage~poly(age, 4, raw=T), data=Wage)
+coef(summary(fit2))
+fit2a <- lm(wage~age+I(age^2)+I(age^3)+I(age^4), data=Wage)
+coef(summary(fit2a))
+## other ways to fit a polynomial model
+agelims <- range(age)
+age.grid <- seq(from = agelims[1],to = agelims[2])
+preds <- predict(fit, newdata = list(age=age.grid), se=T)
+se.bands <- cbind(preds$fit+2*preds$se.fit, preds$fit-2*preds$se.fit)
+## predict
+par(mfrow = c(1,2), mar = c(4.5,4.5,1,1), oma=c(0,0,4,0))
+plot(wage~age, xlim=agelims, cex=.5,col="darkgrey")
+lines(age.grid, preds$fit, lwd=2, col="blue")
+matlines(age.grid, se.bands, lwd=1, col="blue", lty = 3)
+## plot
+fit.1 <- lm(wage~age, data = Wage)
+fit.2 <- lm(wage~poly(age, 2), data = Wage)
+fit.3 <- lm(wage~poly(age, 3), data = Wage)
+fit.4 <- lm(wage~poly(age, 4), data = Wage)
+fit.5 <- lm(wage~poly(age, 5), data = Wage)
+anova(fit.1 ,fit.2, fit.3, fit.4, fit.5)
+## Fit an anova model to select which polyomial to use (when Ho is that the model is sufficient to explain the data)
+fit <- glm(I(wage>250)~poly(age, 4), data=Wage, family = "binomial")	## for individials that earn more than 250000
+preds <- predict(fit, newdata = list(age=age.grid),se=T)
+## polynomial logistic regression (alternative to anova)
+## continued in ch7
+
+require(splines)
+fit <- lm(wage~bs(age, knots = c(25,40,60)), data = Wage)
+## prespecified knots
+pred <- predict(fit, newdata = list(age=age.grid), se=T)
+plot(wage~age, col="gray")
+lines(age.grid, pred$fit, lwd=2)
+lines(age.grid, pred$fit+2*pred$se, lty="dashed")
+lines(age.grid, pred$fit-2*pred$se, lty="dashed")
+### plot
+fit2 <- lm(wage~ns(age, df=4), data=Wage)
+pred2 <- predict(fit2, newdata = list(age=age.grid), se=T)
+lines(age.grid, pred2$fit, col="red", lwd=2)
+## natural splines
+fit <- smooth.spline(age, wage, df=16)
+fit2 <-  smooth.spline(age, wage, cv=TRUE)
+fit2$df
+plot(wage~age, xlim=agelims, cex=.5, col="darkgrey")
+lines(fit, col="red", lwd = 2)	## for 16 DF
+lines(fit2, col="blue", lwd=2)	## for 6.8 DF
+## smoothing spline
+detach(Wage)
+## regression splines
+
+require(tree)
+require(ISLR)
+attach(Carseats)
+High <- ifelse(Sales<=8, "No", "Yes")
+Carseats <- data.frame(Carseats, High)
+## create a binomial class
+tree.carseats <- tree(High~.-Sales, data=Carseats)
+summary(tree.carseats)
+plot(tree.carseats)
+text(tree.carseats, pretty=0)
+## plot
+tree.carseats
+## detailed view of the tree
+set.seed(2)
+train <- sample(1:nrow(Carseats), 200)
+Carseats.test <- Carseats[-train,]
+High.test <- High[-train]
+## prediction accuracy
+tree.carseats <- tree(High~.-Sales, Carseats, subset=train)
+tree.pred <- predict(tree.carseats, Carseats.test, type="class")
+table(tree.pred, High.test)
+(86+57)/200
+## prediction error
+set.seed(3)
+cv.carseets <- cv.tree(tree.carseats, FUN=prune.misclass)	## indicate the classification error rate
+names(cv.carseets)	## dev: the CV error rate
+## pruning the tree (using cross validation)
+par(mfrow = c(1,2))
+plot(cv.carseets$size, cv.carseets$dev, type="b")
+plot(cv.carseets$k, cv.carseets$dev, type="b")
+## plot
+prune.carseats <- prune.misclass(tree.carseats, best=9)
+## prune the tree to obtain the adequate number of nodes
+plot(prune.carseats)
+text(prune.carseats, pretty=0)
+## plot
+tree.pred <- predict(prune.carseats, Carseats.test, type="class")
+table(tree.pred, High.test)
+(94+60)/200
+## test the accuracy of the preduction of the pruned tree
+detach(Carseats)
+## Fitting classification trees
+
+
+require(e1071)
+set.seed(1)
+x <- matrix(rnorm(20*2),ncol=2)
+y <- c(rep(-1,10),rep(1,10))
+x[y==1,] <- x[y==1,]+1
+## genereate data
+plot(x, col=(3-y))
+## plot
+dat <- data.frame(x=x, y=as.factor(y))
+svmfit <- svm(y~., data=dat, kernel = "linear", cost = 10, scale=F)
+plot(svmfit, dat)
+## fit the support vector classifier
+summary(svmfit)
+svmfit <- svm(y~., data=dat, kernel="linear", cost=.1, scale=F)
+plot(svmfit, dat)
+## lower the cost (wider margin)
+tune.out <- tune(svm, y~., data = dat, kernel="linear", ranges = list(cost=c(.001, .01, .1, 1.5, 10, 100)))
+summary(tune.out)
+## test different costs (cross validation)
+bestmod <- tune.out$best.model
+summary(bestmod)
+xtest <- matrix(rnorm(20*2), ncol=2)
+ytest <- sample(c(-1,1),20, rep=T)
+xtest[ytest==1,] <- xtest[ytest==1,]+1
+testdat <- data.frame(x=xtest, y=as.factor(ytest))
+ypred <- predict(bestmod, testdat)
+table(ypred, testdat$y)
+## generate a test data
+ypred <- predict(svmfit, testdat)
+table(ypred, testdat$y)	## with cost=.1, one additional observation is misclassified
+## Suport vector classifier
+
+set.seed(1)
+x <- matrix(rnorm(200*2),ncol=2)
+x[1:100,] <- x[1:100,]+2
+x[101:150,] <- x[101:150,]-2
+y <- c(rep(1,150),rep(2,50))
+dat <- data.frame(x=x, y=as.factor(y))
+## simulate non linear data
+plot(x, col=y)
+## plot
+train <- sample(1:200, 100)
+svmfit <- svm(y~., data=dat[train,], kernel="radial", gamma=1,cost=1)
+plot(svmfit, dat[train,])
+svmfit <- svm(y~., data=dat[train,], kernel="radial", gamma=1, cost = 1e5)
+plot(svmfit, dat[train,])
+## train and plot
+set.seed(1)
+tune.out <- tune(svm, y~., data=dat[train,], kernel="radial", ranges = list(cost=c(.1,1,10,100,1e3), gamma=c(.5,1,2,3,4)))
+summary(tune.out)
+## cross validate to choose the best parameters
+table(true=dat[-train,"y"], pred=predict(tune.out$best.model, newx=dat[-train,]))
+(54+6)/100
+## SVM non linear
+
+require(ROCR)
+## load 01fincs
+svmfit2 <- svm(y~., data=dat[train, ], kernel="radial", gamma=2, cost=1, decision.values=T)
+fitted <- attributes(predict(svmfit2, dat[train, ], decision.values = T))$decision.values
+rocplot(fitted, dat[train,"y"])
+svmfit50 <- svm(y~., data=dat[train, ], kernel="radial", gamma=50, cost=1, decision.values=T)
+fitted <- attributes(predict(svmfit50, dat[train, ], decision.values = T))$decision.values
+rocplot(fitted, dat[train,"y"], add=T, col="red")
+## training error
+fitted <- attributes(predict(svmfit2, dat[-train,], decision.values = T))$decision.values
+rocplot(fitted, dat[-train, "y"], add=T, col="blue")
+fitted <- attributes(predict(svmfit50, dat[-train,], decision.values = T))$decision.values
+rocplot(fitted, dat[-train, "y"], add=T, col="green")
+## test data
+## plot ROC curves
+
+set.seed(1)
+x <- rbind(x, matrix(rnorm(50*2), ncol=2))
+y <- c(y, rep(0,50))
+x[y==0, 2] <- x[y==0, 2]+2
+dat <- data.frame(x=x, y=as.factor(y))
+par(mfrow=c(1,1))
+plot(x, col=(y+1))
+svmfit <- svm(y~., data=dat, kernel="radial", cost=10, gamma=1)
+plot(svmfit, dat)
+## multiclass SVM
+
+
+states <- row.names(USArrests)
+apply(USArrests, 2, mean)
+apply(USArrests, 2, var)
+pr.out <- prcomp(USArrests, scale=T)
+## standaridize the varaibles to have mean 0 and varaince 1 and perform PCA
+pr.out$center
+biplot(pr.out, scale=0)
+## plot the first 2 principal components
+pr.out$rotation <- -pr.out$rotation
+pr.out$x <- -pr.out$x
+biplot(pr.out, scale=0)
+## cahnge the signs of the PCA
+pr.var <- pr.out$sdev^2
+pr.var
+## Variance explained
+pve <- (pr.var/sum(pr.var))*100
+pve
+## proportion of the varaince explained
+plot(pve, type="b", ylim=c(0,100))
+plot(cumsum(pve), type="b", ylim = c(0,100))
+## Principal componenent analysis for unsupervised training
+
+set.seed(2)
+x <- matrix(rnorm(50*2),ncol=2)
+x[1:25,1] <- x[1:25,1]+3
+x[1:25,2] <- x[1:25,2]-4
+## simulate data
+km.out <- kmeans(x,3,nstart = 20)	## always run with big nstart; otherwise an undesirable local optimum may be obtained
+km.out$cluster
+## clusters
+km.out$tot.withinss
+## Total sum of squares (must be small)
+plot(x, col=(km.out$cluster+1), pch=20, cex=2)
+## plot
+## K means clustering
+hr.complete <- hclust(dist(x), method="complete")
+plot(hr.complete, cex=.9)
+cutree(hr.complete, 2)
+xsc <- scale(x)
+plot(hclust(dist(xsc),method="complete"))
+## euclidean distance as the dissimilarity measure
+x <- matrix(rnorm(50*3),ncol=2)
+dd <- as.dist(1-cor(t(x)))
+plot(hclust(dd, method="complete"))
+## correlation based distance
+## hierearchical clustering
+
+library(ISLR)
+nci.labs <- NCI60$labs
+nci.data <- NCI60$data
+dim(nci.data)
+nci.labs[1:4]
+table(nci.labs)
+## prepare data
+pr.out <- prcomp(nci.data, scale=T)
+## PCA
+Cols <- function(vec){
+cols <- rainbow(length(unique(vec)))
+return(cols[as.numeric(as.factor(vec))])
+}
+par(mfrow=c(1,2))
+plot(pr.out$x[,1:2], col=Cols(nci.labs), pch=19, xlab = "Z1", ylab = "Z2")
+plot(pr.out$x[,c(1,3)], col=Cols(nci.labs), pch=19, ylab="Z3", xlab="Z1")
+## plot
+summary(pr.out)
+plot(pr.out)
+pve <- 100*pr.out$sdev^2/sum(pr.out$sdev^2)
+plot(pve, type="o", ylab="pve", xlab="Principal component", col="blue")
+plot(cumsum(pve), type="o", ylab="cumulative pve", xlab="principal component", col="brown3")
+## PVE (proportion of varaince explained)
+sd.data <- scale(nci.data)
+sd.data <- dist(sd.data)
+par(mfrow = c(1,1))
+plot(hclust(sd.data, method="complete"), labels=nci.labs, main="complete linkage", cex=.7)
+## clustering the observations euclidean distance
+hc.out <- hclust(sd.data)
+hc.clusters <- cutree(hc.out, 4)
+table(hc.clusters, nci.labs)
+plot(hc.out, labels=nci.labs)
+abline(h=139, col="red")
+## cut the dendrogram
+km.out <- kmeans(scale(nci.data), 4, nstart = 20)
+km.clusters <- km.out$cluster
+table(km.clusters, hc.clusters)
+## compare K=4 to kmeans
+hc.out <- hclust(dist(pr.out$x[,1:5]))
+plot(hc.out, labels=nci.labs, main="hier clust on first 5 score vectors")
+table(cutree(hc.out, 4), nci.labs)
+# hierarchical clustering on the first few princiapl components
+## UNSUPRVISED TRAINING
 
 
 

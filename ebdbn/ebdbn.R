@@ -313,7 +313,7 @@ x
 sigBinary	 <-net2Bin(NET$z)
 
 ## FUNCTION TO EXTRACT REGULATION INTO CYTOSCAPE FORMAT (FROM RAU)
-visualize <- function (zscores, sig, type = "feedback")  {
+visualizeNet <- function (zscores, sig, type = "feedback")  {
     row <- dim(zscores)[1]
     col <- dim(zscores)[2]
     network <- matrix(0, nrow = row, ncol = col)
@@ -330,8 +330,8 @@ visualize <- function (zscores, sig, type = "feedback")  {
 }
 
 ## VISUALIZE EXTRACTS CONNECTIONS --- (choose Inp or Feed)
-cytoNet <- visualize(NET$z, sigBinary, type="input")
-cytoNet <- visualize(NET$z, sigBinary, type="feedback")
+cytoNet <- visualizeNet(NET$z, sigBinary, type="input")
+cytoNet <- visualizeNet(NET$z, sigBinary, type="feedback")
 ## EXTRACT INTERACTIONS
 setwd("C:\\Dropbox\\Workshop2013\\Work\\R\\ebdbn\\Second\\")
 write.table(cytoNet, "networkG12.txt",sep="\t", quote=F, col.names=F, row.names=F)

@@ -26,7 +26,7 @@ x
 
 ## EBDBN
 ## FUNCTION TO EXTRACT REGULATION INTO CYTOSCAPE FORMAT (FROM RAU)
-visualize <- function (zscores, sig, type = "feedback")  {
+visualizeNet<- function (zscores, sig, type = "feedback")  {
     row <- dim(zscores)[1]
     col <- dim(zscores)[2]
     network <- matrix(0, nrow = row, ncol = col)
@@ -47,20 +47,19 @@ visualize <- function (zscores, sig, type = "feedback")  {
 ## Bagging for Ensemble Learning
 ## Bootstrap aggregation (Bagging) + 1 classifier = RMSE
 ## source : (http://tinyurl.com/ljt9f78)
-bagging <- function(training, testing, m=10, ite=2, meth="svmRadial",gridZ=ctl){
+bagging <- function(training, testing, m=10, ite=2, meth="svmRadial",tune=5){
 	Predd <- foreach(i=1:ite,.combine=cbind,.packages='caret') %dopar% {
 		bagging.index <- sample(1:dim(training)[1], size=floor((nrow(training)/m)))	## vector list
-		Train.me <- train(species~.,
+		Train.me <- train(y~.,
 				data=training[bagging.index,],
 				method=meth,
-				tuneGrid=gridZ,
-				trControl=trainControl(method="repeatedcv", number=10, repeats=5
-					#classProbs=T,
-					#summaryFunction=twoClassSummary
-					),
-				#tuneLength=tune,
+#				tuneGrid=gridZ,
+				trControl=trainControl(method="repeatedcv",number=10,repeats=5
+#                                    classProbs=T,summaryFunction=twoClassSummary
+                                    ),
+				tuneLength=tune,
 				preProc=c("center","scale")
-				#metric="ROC"
+#				metric="ROC"
 				)
 	predict(Train.me, newdata=testing)
 }
@@ -602,6 +601,50 @@ mat[,names(coefi)]%*%coefi
 }
 ## source 06-3-R for forward and backward subset selection form Stat learning ch6
 
+
+rocplot <- function(pred, truth, ...){
+predob <- prediction(pred, truth)
+perf <- performance(predob, "tpr", "fpr")
+plot(perf,...)}
+## plot ROC curves (p365 ch9 Stat leanring)
+
+Cols <- function(vec){
+cols <- rainbow(length(unique(vec)))
+return(cols[as.numeric(as.factor(vec))])
+}
+## return colours (used in PCA ann2.R)
+
+set.var <- function(dat,n,b){
+locus.var <- apply(t(dat), n, var)
+hi.var <- order(abs(locus.var), decreasing = T)[1:b]
+cat("\nRange of the variance:",range(locus.var),"\n")
+cat("\nNumber of selected high-variance genes:",length(hi.var),"\n")
+return(hi.x <- dat[,hi.var])
+}
+## Unsupervised gene selection based on high variance
+
+set.cor <- function(x,cutoff){
+require(caret)
+cor.x <- cor(hi.x)
+print(summary(cor.x[upper.tri(cor.x)]))
+cor.hi.x <- findCorrelation(cor.x, cutoff=cutoff)
+return(hi.x <- hi.x[, -cor.hi.x])
+}
+## Unsupervised gene selection based on low correlation
+
+range_correlation <- function(dataY,n=1,t=1,data,method){
+resultats <- solutions(dataY)[[n]][t,]
+test=NULL
+for(i in 1:length(resultats)){test <- c(test,correlate(data[,n],data[,resultats[i]],method=method)$statistic)}
+cat("\n","The range of the correlations:")
+return(range(test))
+}
+## require(mRMRe). Compute correlation between selected features (feature selection Paper3) then the range
+
+locusRMR <- function(dataY,dataX,n,t){
+print(apply(solutions(dataY)[[n]], 2, function(x,y) { return(y[x]) }, y=featureNames(dataX))[t,])
+}
+## require(mRMRe). returns locus names
 
 
 

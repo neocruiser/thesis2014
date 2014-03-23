@@ -80,18 +80,21 @@ Performance, Competence & Quality (0, 10, 21, 32 dpf) # profil ac gras
 ## Construct what=unique means, from=limma results
 #merge cust + name===============================
 setwd("C:/Dropbox/Workshop2013/Work/R/datasets/")
-id <- read.table("id2.txt", sep="\t", header=T)			## All printed probes
-exportID <- read.table("Locus2ID.txt", sep="\t", header=T)			## only annotated sequences
+id <- read.table("id2.txt", sep="\t", header=T); dim(id)			## All printed probes
+exportID <- read.table("Locus2ID.txt", sep="\t", header=T); dim(exportID)			## only annotated sequences
+#exportID <- read.table("Locus2ID50k.txt", sep="\t", header=T)			## All sequences PAPer3
 # only annotated sequences (non annot are discarded)
-cust <- merge(id,exportID)
-cust <- cust[!duplicated(cust),]
+cust <- merge(id,exportID); dim(cust); names(cust)
+cust <- cust[!duplicated(cust),]; dim(cust)
 
 #merge results + name (log ratios)
 ## Result or RUN files are from limma preprSocessing
-setwd("C:/Dropbox/Workshop2013/Work/R/datasets/weights/")
+setwd("C:/Dropbox/Workshop2013/Work/R/datasets/")
 #results <- read.table("resultsLmFitBgmin.txt", sep="\t", header=T)	## PAPER 2
-results <- read.table("resultsCoc_Iso.txt", sep="\t", header=T)	## PAPER 3
-results <- merge(results,cust, by.x="cust", by.y="cust")
+#results <- read.table("23samples15K.txt", sep="\t", header=T); dim(results)	## PAPER 3 try out
+#results <- read.table("allPredictorsCoc_Tiso.txt", sep="\t", header=T)	## PAPER 3
+results <- read.table("22samples15K.txt", sep="\t", header=T)	## PAPER 3
+results <- merge(results,cust, by.x="cust", by.y="cust"); dim(results)
 
 ## Consolidate duplicate rows
 ## calculate means of uniques probes
@@ -106,7 +109,7 @@ means <- merge(means,exportID, by.x="locus", by.y="locus")
 description <- means[,dim(means)[2]]; means <- means[,1:(dim(means)[2]-1)]; means <- cbind(description,means)	## PAPER 3
 rm(description)
 setwd("C:\\Dropbox\\Workshop2013\\Work\\R\\datasets\\weights\\")
-write.table(means, "meansPaper3.txt", sep="\t", quote=F)
+write.table(means, "means22samples15K.txt", sep="\t", quote=F)
 cat("\n","Dimensions of means after probe averaging:",dim(means),"\n")
 
 #########################################################################
