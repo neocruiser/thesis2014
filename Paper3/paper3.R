@@ -39,6 +39,12 @@ length(locus)
 ## extract LOCUS names
 ## Parallelized mRMR ensemble Feature selection
 
+hi.x <- set.cor(hi.x, 0.75)
+cor.x <- cor(hi.x)
+summary(cor.x[upper.tri(cor.x)])
+dim(hi.x)
+## Unsupervised gene selection based on low correlation
+
 ##############################
 # Training/Testing
 ##############################
@@ -55,6 +61,7 @@ y <- as.vector(model.matrix(~y,dat)[,2])
 ##############################
 # Feature extraction
 ##############################
+
 ## LASSO
 grid <- 10^seq(10, -2, length=100)
 require(glmnet)
@@ -87,6 +94,24 @@ foo <- row.names(means[rownames(means) %in% final.select,])
 means[rownames(means) %in% final.select,2]
 lasso.select <- x[,foo]
 dim(lasso.select)
+## extract locus (1)
+lasso.1 <- data.frame(X1=lasso.coef$E@Dimnames[-2], X2=lasso.coef$E[1:c(length(hi.var)+1)])
+lasso.1 <- lasso.1[lasso.1$X2!=0,]; dim(lasso.1[-1,])
+lasso.2 <- data.frame(X1=lasso.coef$L@Dimnames[-2], X2=lasso.coef$L[1:c(length(hi.var)+1)])
+lasso.2 <- lasso.2[lasso.2$X2!=0,]; dim(lasso.2[-1,])
+lasso.3 <- data.frame(X1=lasso.coef$PL@Dimnames[-2], X2=lasso.coef$PL[1:c(length(hi.var)+1)])
+lasso.3 <- lasso.3[lasso.3$X2!=0,]; dim(lasso.3[-1,])
+lasso.4 <- data.frame(X1=lasso.coef$Lc@Dimnames[-2], X2=lasso.coef$Lc[1:c(length(hi.var)+1)])
+lasso.4 <- lasso.4[lasso.4$X2!=0,]; dim(lasso.4[-1,])
+lasso.5 <- data.frame(X1=lasso.coef$PLc@Dimnames[-2], X2=lasso.coef$PLc[1:c(length(hi.var)+1)])
+lasso.5 <- lasso.5[lasso.5$X2!=0,]; dim(lasso.5[-1,])
+## extract locus (2)
+dat.uniq <- rbind(data.frame(x=lasso.1[-1,1]), data.frame(x=lasso.2[-1,1]), data.frame(x=lasso.3[-1,1]), data.frame(x=lasso.4[-1,1]), data.frame(x=lasso.5[-1,1]))
+dat.uniq 	## must be locus names
+dim(dat.uniq)
+foo <- row.names(means[rownames(means) %in% dat.uniq$x, ])
+lasso.select <- x[,foo]
+dim(lasso.select)
 ## extract genes from model selection
 ## LASSO (from the GLM package)
 
@@ -110,9 +135,36 @@ model.names <- means[rownames(means) %in% foo, 2]
 model30_LR <- Profile
 ## Feature extraction  (paper3)
 
+## Regularized random forest
+set.seed(1445612321)
+require(RRF)
+tuneRRF(foo,as.factor(y),mtryStart = 20,ntreeTry = 1000)
+rrf.select <- RRF(foo[train,],as.factor(y[train]),mtry=40,ntree=5000,importance=T,keep.forest = T,proximity = T)
+print(rrf.select)
+plot(rrf.select, type="l")
+getTree(rrf.select,k=3,labelVar = T)
+importance(rrf.select,type = 2)	## Gini index measures the impurity of the nodes (type=
+2)
+plot(margin(rrf.select))	## positive margin = correct classification
+dat <- data.frame(y=y, foo)
+partialPlot(rrf.select, dat,Locus29734,"L")
+## training
+rrf.cv <- rrfcv(foo[train,],as.factor(y[train]),cv.fold = 10,scale="log")
+with(rrf.cv, plot(n.var,error.cv,log="x",type="o",lwd = 2))
+## cross validation
+predict(rrf.select, foo[test,],type="response")
+predict(rrf.select, foo[test,],type="prob")
+## testing
+varImpPlot(rrf.select)
+MDSplot(rrf.select,as.factor(y[train]),k=2,pch=c(1:nlevels(as.factor(y))))
+## variable importance
+## Regularized Random Forest
+
+
 ##############################
 # Building classifier on subset model
 ##############################
+
 ## Choosing the right Hyper-parameters. GRID ANALYSIS
 require(caret)
 dat <- data.frame(y=y, lasso.select); dim(dat)
