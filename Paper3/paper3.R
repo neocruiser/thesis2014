@@ -33,9 +33,9 @@ feature.select <- new("mRMRe.Data",data=data.frame(hi.x[,1:5000, drop=F])); gc()
 set.seed(1445612321)
 locus.select <- new("mRMRe.Filter", data=feature.select, target_indices=1:5, levels=c(1000,1,1,1,1), continuous_estimator="spearman"); gc()
 ## feature select min redundant max relevant genes
-range_correlation(locus.select,n=4,t=1,hi.x,method="spearman")	# n=gene(set w target_indices); t=different gene mashups
+range_correlation(locus.select,n=1,t=1,hi.x,method="spearman")	# n=gene(set w target_indices); t=different gene mashups
 ## view range of correlated selected features
-locus <- locusRMR(locus.select,feature.select,n=4,t=1)
+locus <- locusRMR(locus.select,feature.select,n=5,t=1)
 length(locus)
 ## extract LOCUS names
 ## Parallelized mRMR ensemble Feature selection
@@ -81,6 +81,7 @@ table(lasso.pred, y[test])		## Confusion matrix for classification
 mean((lasso.pred - y[test])^2)		## Test set MSE for regression
 lasso.coef <- predict(lasso.mod, s=bestlam, type = "coefficients")
 str(lasso.coef)
+gene5.mRMR <- lasso.coef	## SAVE to .Rdata
 ## show results
 ind.lasso <- lasso.coef@i
 loc.lasso <- lasso.coef@Dimnames[[1]]
@@ -91,26 +92,6 @@ lasso.select <- x[,foo]
 dim(lasso.select)
 ## extract genes from model selection
 ## LASSO (from the GLM package)
-
-## START CARET WRAPPER Feature extraction
-require(caret)
-#sam.x <- sample(1:1000,100)
-#subsets <- seq(20,100,10)
-NN <- lasso.select
-trainCtrl <- trainControl(classProbs = T, summaryFunction = twoClassSummary)	## Classification 2lv
-ctrl <- rfeControl(functions=caretFuncs, method="repeatedcv", repeats=3, verbose=F)
-set.seed(1445612321)
-#system.time(Profile <- rfe(NN[train,], as.factor(y[train]), rfeControl=ctrl, metric="ROC",trControl=trainCtrl, method="multinom"))
-system.time(Profile <- rfe(NN[train,], as.factor(y[train]),rfeControl=ctrl, metric="Accuracy", method='multinom'))	## Regression
-plot(Profile, type=c("l"))
-dat.uniq <- predictors(Profile)
-foo <- row.names(means[rownames(means) %in% dat.uniq, ])
-lasso.select <- x[,foo]; dim(lasso.select)
-pred.select <- predict(Profile, x[test,],type="prob")
-table(pred.select$pred,y[test])
-model.names <- means[rownames(means) %in% foo, 2]
-model1 <- Profile
-## Feature extraction  (paper3)
 
 ##############################
 # Building classifier on subset model
@@ -125,7 +106,7 @@ dat <- data.frame(y=y, lasso.select); dim(dat)
 #ctl=expand.grid(.n.trees=100, .interaction.depth=1, .shrinkage=.001)	## Boosting (not working)
 #ctl=expand.grid(.mtry=23)	## Random forest
 set.seed(1445612321)
-model.reg(dat,train,test,method="pls",folds=10,r=5,tune=10)
+model.reg(dat,train,test,method="svmPoly",folds=10,r=5,tune=10)
 modelTune.reg(dat,train,test,method="pls",folds=10,r=5,tune=10,ctl)
 ## Regression
 model.clas(dat,train,test,method="pls",folds=10,r=5,tune=10)
@@ -355,6 +336,7 @@ sqrt((sum((stages[test,1] - Predd)^2))/nrow(stages[test,]))		## compute RMSE (RE
 ##############################
 
 setwd("C:/Dropbox/Workshop2013/Work/R/ANN")
-load("paper3.Rdata", .GlobalEnv)
-lsos(pat="model.*")
-save(list=ls(pattern="model.*"),file="paper3.Rdata")	## save
+lsos(pat="locus.select|*.mRMR")
+save(list=ls(pattern="*.mRMR"),file="lassoSelected.Rdata")	## save
+    save(list=ls(pattern="locus.select"),file="mRMRselected.Rdata")	## save
+load("", .GlobalEnv)
