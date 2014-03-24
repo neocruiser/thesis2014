@@ -647,6 +647,74 @@ print(apply(solutions(dataY)[[n]], 2, function(x,y) { return(y[x]) }, y=featureN
 ## require(mRMRe). returns locus names
 
 
+model.reg <- function(dat,train,test,method,folds=10,rep=5,tune){
+    trainCtrl <- trainControl(method="repeatedcv",number=folds, repeats=rep)	## Regression
+    lapsed <- system.time(modelTrain <- train(y~., data=dat[train,],
+                                              method=method,
+                                              trControl= trainCtrl,
+                                              preProc=c("center","scale"),
+                                              tuneLength=tune ))
+    ploted <- plot(modelTrain)
+    Predd <- predict(modelTrain, newdata=dat[test,], type="raw")
+    rmse <- mean((Predd - y[test])^2)		## Test set MSE for regression
+    output <- list(ploted,TimeLapsed=lapsed, Hyperparameters=modelTrain$bestTune, RMSE=rmse)
+    return(output)
+}
+## require(caret). Regression. Train model and test on independant test set return(RMSE)
+
+modelTune.reg <- function(dat,train,test,method,folds=10,rep=5,tune,ctl){
+    trainCtrl <- trainControl(method="repeatedcv",number=folds, repeats=rep)	## Regression
+    lapsed <- system.time(modelTrain <- train(y~., data=dat[train,],
+                                              method=method,
+                                              trControl= trainCtrl,
+                                              preProc=c("center","scale"),
+                                              tuneGrid=ctl,
+                                              tuneLength=tune ))
+    ploted <- plot(modelTrain)
+    Predd <- predict(modelTrain, newdata=dat[test,], type="raw")
+    rmse <- mean((Predd - y[test])^2)		## Test set MSE for regression
+    output <- list(ploted,TimeLapsed=lapsed, Hyperparameters=modelTrain$bestTune, RMSE=rmse)
+    return(output)
+}
+## require(caret). Regression. Uses GRID for HYPERPARAMETER tuning. Train model and test on independant test set return(RMSE)
+
+model.clas <- function(dat,train,test,method,folds=10,rep=5){
+    trainCtrl <- trainControl(method="repeatedcv",number=folds, repeats=rep, , classProbs=T,summaryFunction=defaultSummary) ## classification
+    lapsed <- system.time(modelTrain <- train(y~., data=dat[train,],
+                                              method=method,
+                                              trControl= trainCtrl,
+                                              preProc=c("center","scale"),
+                                              tuneLength=tune,
+                                              metric="ROC"))
+    ploted <- plot(modelTrain)
+    Predd <- predict(modelTrain, newdata=dat[test,], type="raw")
+    conf.m <- confusionMatrix(data=Predd, dat[test,1])	## confusion matrix for classification
+    Probs <- predict(modelTrain, newdata=dat[test,], type="prob")
+    output <- list(ploted,TimeLapsed=lapsed, Hyperparameters=modelTrain$bestTune, ConfusionMatrix=conf.m,Probabilities=Probs)
+    return(output)
+}
+## require(caret). Classification. Train model and test on independant test set return(classification error)
+
+modelTune.clas <- function(dat,train,test,method,folds=10,rep=5,tune){
+    trainCtrl <- trainControl(method="repeatedcv",number=folds, repeats=rep, , classProbs=T,summaryFunction=defaultSummary) ## classification
+    lapsed <- system.time(modelTrain <- train(y~., data=dat[train,],
+                                              method=method,
+                                              trControl= trainCtrl,
+                                              preProc=c("center","scale"),
+                                              tuneGrid=ctl,
+                                              tuneLength=tune,
+                                              metric="ROC"))
+    ploted <- plot(modelTrain)
+    Predd <- predict(modelTrain, newdata=dat[test,], type="raw")
+    conf.m <- confusionMatrix(data=Predd, dat[test,1])	## confusion matrix for classification
+    Probs <- predict(modelTrain, newdata=dat[test,], type="prob")
+    output <- list(ploted,TimeLapsed=lapsed, Hyperparameters=modelTrain$bestTune, ConfusionMatrix=conf.m,Probabilities=Probs)
+    return(output)
+}
+## require(caret). Classification. GRID search HYPERPARAMETERS tuning. Train model and test on independant test set return(classification error)
+
+
+
 
 
 

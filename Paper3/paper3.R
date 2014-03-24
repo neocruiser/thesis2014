@@ -30,11 +30,12 @@ cor.x <- cor(hi.x); summary(cor.x[upper.tri(cor.x)])
 require(mRMRe)
 feature.select <- new("mRMRe.Data",data=data.frame(hi.x[,1:5000, drop=F])); gc()
 ## extract data
-locus.select <- new("mRMRe.Filter",data=feature.select,target_indices=1:5,levels=c(1000,1),continuous_estimator="spearman"); gc()
+set.seed(1445612321)
+locus.select <- new("mRMRe.Filter", data=feature.select, target_indices=1:5, levels=c(1000,1,1,1,1), continuous_estimator="spearman"); gc()
 ## feature select min redundant max relevant genes
-range_correlation(locus.select,n=1,t=1,hi.x,method="spearman")	# n=gene(set w target_indices); t=different gene mashups
+range_correlation(locus.select,n=4,t=1,hi.x,method="spearman")	# n=gene(set w target_indices); t=different gene mashups
 ## view range of correlated selected features
-locus <- locusRMR(locus.select,feature.select,1,1)
+locus <- locusRMR(locus.select,feature.select,n=4,t=1)
 length(locus)
 ## extract LOCUS names
 ## Parallelized mRMR ensemble Feature selection
@@ -55,6 +56,7 @@ y <- as.vector(model.matrix(~y,dat)[,2])
 ##############################
 # Feature extraction
 ##############################
+
 ## LASSO
 grid <- 10^seq(10, -2, length=100)
 require(glmnet)
@@ -107,7 +109,7 @@ lasso.select <- x[,foo]; dim(lasso.select)
 pred.select <- predict(Profile, x[test,],type="prob")
 table(pred.select$pred,y[test])
 model.names <- means[rownames(means) %in% foo, 2]
-model30_LR <- Profile
+model1 <- Profile
 ## Feature extraction  (paper3)
 
 ##############################
@@ -116,36 +118,21 @@ model30_LR <- Profile
 ## Choosing the right Hyper-parameters. GRID ANALYSIS
 require(caret)
 dat <- data.frame(y=y, lasso.select); dim(dat)
-ctl=expand.grid(.size=seq(0,10,length=20), .decay=10^seq(1,-5,length=20))	## nnet
+#ctl=expand.grid(.size=seq(0,10,length=20), .decay=10^seq(1,-5,length=20))	## nnet
 #ctl=expand.grid(.C=, .sigma=0.27)	## svmRadial
 #ctl=expand.grid(.C=10^seq(1,-4,length=100), .degree=10^seq(1,-1,length=40), .scale=10^seq(1,-3,length=40))	## svmPoly
 #ctl=expand.grid(.alpha=seq(0.1,1,0.1), .lambda=10^seq(10, -4, length=100))	## glmnet
 #ctl=expand.grid(.n.trees=100, .interaction.depth=1, .shrinkage=.001)	## Boosting (not working)
 #ctl=expand.grid(.mtry=23)	## Random forest
-#trainCtrl <- trainControl(method="repeatedcv",number=10, repeats=3, classProbs=T,summaryFunction=defaultSummary) ## classification
-trainCtrl <- trainControl(method="repeatedcv",number=10, repeats=5)	## Regression
 set.seed(1445612321)
-system.time(modelTrain <- train(y~., data=dat[train,],
-                method="nnet",
-		trControl= trainCtrl,
-		tuneGrid=ctl,
-                preProc=c("center","scale"),
-                tuneLength=10
-#		,metric="ROC"
-                    ))
+model.reg(dat,train,test,method="pls",folds=10,r=5,tune=10)
+modelTune.reg(dat,train,test,method="pls",folds=10,r=5,tune=10,ctl)
+## Regression
+model.clas(dat,train,test,method="pls",folds=10,r=5,tune=10)
+modelTune.clas(dat,train,test,method="pls",folds=10,r=5,tune=10,ctl)
+## Classification
+## Hyper-parameters tuning and model optimization
 
-modelTrain
-plot(modelTrain)
-## Plot
-require(caTools)
-Predd <- predict(modelTrain, newdata=dat[test,], type="prob"); Predd
-colAUC(Predd, dat[test,1], plot=T)
-## AUC of the ROC curve
-Predd <- predict(modelTrain, newdata=dat[test,], type="raw")
-mean((Predd - y[test])^2)		## Test set MSE for regression
-confusionMatrix(data=Predd, dat[test,1])	## confusion matrix for classification
-## Classification error rate or RMSE
-## CARET Training model
 
 require(caret)
 require(foreach)
