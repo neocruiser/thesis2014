@@ -616,10 +616,8 @@ sqrt((sum((testing$species - ensemble.pred)^2))/nrow(testing))
 ## source file can be found here : C:\Users\Sleiman Bassim\Downloads\Learners
 x <- read.table("clipboard", sep="\t", header=T);x
 library(lattice)
-
 ## plot RMSE versus different learners
 xyplot(SumRMSE ~ Learners | weight + Bagging, data=x, type="o", col="black",pch=20, cex=1)
-
 ## plot the duration of the run with different clusters (4 and 7 of sNOW)
 xyplot(Time ~ Iterations | Clusters + Learner, data=x, type="o", col="blue",pch=20, cex=1)
 

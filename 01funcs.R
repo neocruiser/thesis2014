@@ -47,25 +47,65 @@ visualizeNet<- function (zscores, sig, type = "feedback")  {
 ## Bagging for Ensemble Learning
 ## Bootstrap aggregation (Bagging) + 1 classifier = RMSE
 ## source : (http://tinyurl.com/ljt9f78)
-bagging <- function(training, testing, m=10, ite=2, meth="svmRadial",tune=5){
-	Predd <- foreach(i=1:ite,.combine=cbind,.packages='caret') %dopar% {
+bagging <- function(training, testing, m=10, ite=2, methods,tune=5){
+	lapsed <- system.time(Predd <- foreach(i=1:ite,.combine=cbind,.packages='caret') %dopar% {
 		bagging.index <- sample(1:dim(training)[1], size=floor((nrow(training)/m)))	## vector list
 		Train.me <- train(y~.,
-				data=training[bagging.index,],
-				method=meth,
-#				tuneGrid=gridZ,
-				trControl=trainControl(method="repeatedcv",number=10,repeats=5
-#                                    classProbs=T,summaryFunction=twoClassSummary
-                                    ),
-				tuneLength=tune,
-				preProc=c("center","scale")
-#				metric="ROC"
-				)
-	predict(Train.me, newdata=testing)
-}
-	rowMeans(Predd)
+                                                       data=training[bagging.index,],
+                                                       method=methods,
+                                                       trControl=trainControl(method="repeatedcv",number=10,repeats=5),
+                                                       tuneLength=tune,
+                                                       preProc=c("center","scale"))
+	predict(Train.me, newdata=testing,type="raw")
+})
+	RMSE <- mean((Predd - testing[,1])^2)		## Test set MSE for regression
+        ploted <- plot(Train.me)
+        output <- list(Time.Lapsed=lapsed,RMSE=RMSE,ploted)
+        return(output)
 }
 
+## Bagging for Ensemble Learning
+## Bootstrap aggregation (Bagging) + 1 classifier = RMSE
+## source : (http://tinyurl.com/ljt9f78)
+baggingTune <- function(training, testing, m=10, ite=2, methods,tune=5,gridZ){
+	lapsed <- system.time(Predd <- foreach(i=1:ite,.combine=cbind,.packages='caret') %dopar% {
+		bagging.index <- sample(1:dim(training)[1], size=floor((nrow(training)/m)))	## vector list
+		Train.me <- train(y~.,
+                                                       data=training[bagging.index,],
+                                                       method=methods,
+                                                       trControl=trainControl(method="repeatedcv",number=10,repeats=5),
+                                                       tuneLength=tune,
+                                                       tuneGrid=gridZ,
+                                                       preProc=c("center","scale"))
+	predict(Train.me, newdata=testing,type="raw")
+})
+	RMSE <- mean((Predd - testing[,1])^2)		## Test set MSE for regression
+        output <- list(Time.Lapsed=lapsed,RMSE=RMSE)
+        return(output)
+}
+
+
+## Bagging for Ensemble Learning
+## Bootstrap aggregation (Bagging) + 1 classifier = RMSE
+## source : (http://tinyurl.com/ljt9f78)
+bagging.clas <- function(training, testing, m=10, ite=2, methods,tune=5){
+	lapsed <- system.time(Predd <- foreach(i=1:ite,.combine=cbind,.packages=c('caret','caTools')) %dopar% {
+		bagging.index <- sample(1:dim(training)[1], size=floor((nrow(training)/m)))	## vector list
+		timed <- system.time(Train.me <- train(y~.,
+                                                       data=training[bagging.index,],
+                                                       method=methods,
+                                                       trControl=trainControl(method="repeatedcv",
+                                                       number=10,repeats=5, classProbs=T, summaryFunction=twoClassSummary),
+                                                       tuneLength=tune,
+                                                       metric="ROC",
+                                                       preProc=c("center","scale")))
+	predict(Train.me, newdata=testing,type="raw")
+})
+	ploted <- plot(Train.me)
+        conf.mat <- confusionMatrix(data=Predd, dat[test,1])	## confusion matrix for classification
+        output <- list(TimedModel=timed,TimedBagging=lapsedy,ploted,ConfusionMatrix=conf.mat)
+        return(output)
+}
 
 
 ## source : http://tinyurl.com/lo53qls

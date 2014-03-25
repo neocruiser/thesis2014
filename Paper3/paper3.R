@@ -35,7 +35,7 @@ locus.select <- new("mRMRe.Filter", data=feature.select, target_indices=1:5, lev
 ## feature select min redundant max relevant genes
 range_correlation(locus.select,n=1,t=1,hi.x,method="spearman")	# n=gene(set w target_indices); t=different gene mashups
 ## view range of correlated selected features
-locus <- locusRMR(locus.select,feature.select,n=5,t=1)
+locus <- locusRMR(locus.select,feature.select,n=1,t=1)
 length(locus)
 ## extract LOCUS names
 ## Parallelized mRMR ensemble Feature selection
@@ -81,7 +81,7 @@ table(lasso.pred, y[test])		## Confusion matrix for classification
 mean((lasso.pred - y[test])^2)		## Test set MSE for regression
 lasso.coef <- predict(lasso.mod, s=bestlam, type = "coefficients")
 str(lasso.coef)
-gene5.mRMR <- lasso.coef	## SAVE to .Rdata
+gene1leaf.mRMR <- lasso.coef	## SAVE to .Rdata
 ## show results
 ind.lasso <- lasso.coef@i
 loc.lasso <- lasso.coef@Dimnames[[1]]
@@ -99,28 +99,38 @@ dim(lasso.select)
 ## Choosing the right Hyper-parameters. GRID ANALYSIS
 require(caret)
 dat <- data.frame(y=y, lasso.select); dim(dat)
-#ctl=expand.grid(.size=seq(0,10,length=20), .decay=10^seq(1,-5,length=20))	## nnet
+ctl=expand.grid(.size=seq(1,20,length=50), .decay=10^seq(-1,-5,length=50))	## nnet
 #ctl=expand.grid(.C=, .sigma=0.27)	## svmRadial
 #ctl=expand.grid(.C=10^seq(1,-4,length=100), .degree=10^seq(1,-1,length=40), .scale=10^seq(1,-3,length=40))	## svmPoly
 #ctl=expand.grid(.alpha=seq(0.1,1,0.1), .lambda=10^seq(10, -4, length=100))	## glmnet
 #ctl=expand.grid(.n.trees=100, .interaction.depth=1, .shrinkage=.001)	## Boosting (not working)
 #ctl=expand.grid(.mtry=23)	## Random forest
 set.seed(1445612321)
-model.reg(dat,train,test,method="svmPoly",folds=10,r=5,tune=10)
-modelTune.reg(dat,train,test,method="pls",folds=10,r=5,tune=10,ctl)
+modelTune.reg(dat,train,test,method="nnet",folds=10,r=5,tune=10,ctl)	# Tune hyper-parameters
+model.reg(dat,train,test,method="nnet",folds=10,r=5,tune=10)
 ## Regression
 model.clas(dat,train,test,method="pls",folds=10,r=5,tune=10)
 modelTune.clas(dat,train,test,method="pls",folds=10,r=5,tune=10,ctl)
 ## Classification
 ## Hyper-parameters tuning and model optimization
 
+modelsRMSE <- read.table("clipboard", sep="\t", header=T);modelsRMSE
+library(lattice)
+xyplot(Gene1 + Gene2 + Gene3 + Gene4 + Gene5~Model, data=modelsRMSE, type=c("a","p"), pch =20,cex = 1,auto.key = list(space="top",points=T,lines=F))
+xyplot(Tree1 + Tree2 + Tree3 + Tree4 + Tree5~Model, data=modelsRMSE, type=c("a","p"), pch =20,cex = 1,auto.key = list(space="top",points=T,lines=F))
+xyplot(Gene1 + Gene2 + Gene3 + Gene4 + Gene5 ~ Model, data=modelsRMSE, type=c("a"),auto.key = list(space="top",points=F,lines=T))
+## plot RMSE versus different learners
 
+##############################
+# Ensemble Learning (bagging)
+##############################
 require(caret)
 require(foreach)
 require(doSNOW)
 cl <- makeCluster(3)
 registerDoSNOW(cl)
-ctl=expand.grid(.size=0.5, .decay=0.03)	## nnet
+#ctl=expand.grid(.size=0.5, .decay=0.03)	## nnet
+ctl=expand.grid(.size=3, .decay=0)	## nnet
 #ctl=expand.grid(.C=, .sigma=0.27)	## svmRadial
 #ctl=expand.grid(.C=10^seq(1,-4,length=100), .degree=10^seq(1,-1,length=40), .scale=10^seq(1,-3,length=40))	## svmPoly
 #ctl=expand.grid(.alpha=seq(0.1,1,0.1), .lambda=10^seq(10, -4, length=100))	## glmnet
@@ -128,7 +138,12 @@ ctl=expand.grid(.size=0.5, .decay=0.03)	## nnet
 #ctl=expand.grid(.mtry=23)	## Random forest
 dat <- data.frame(y=y, lasso.select); dim(dat)
 set.seed(1445612321)
-system.time(modelbag <- bagging(dat[train,],dat[test,],m=1.1,ite=100,meth="nnet",tune=10))
+bagging(dat[train,],dat[test,],m=1.1,ite=100,methods="nnet",tune=10)
+## for testing
+baggingTune(dat[train,],dat[test,],m=1.1,ite=100,methods="nnet",tune=10,gridZ=ctl)
+## For tuning the hyper-parameters
+bagging.clas(dat[train,],dat[test,],m=1.1,ite=100,methods="nnet",tune=10)
+## For Classification
 ## END RUN
 mean((modelbag - y[test])^2)		## Test set MSE for regression
 stopCluster(cl)		## close cluster only after finishing w all modelse
@@ -338,5 +353,5 @@ sqrt((sum((stages[test,1] - Predd)^2))/nrow(stages[test,]))		## compute RMSE (RE
 setwd("C:/Dropbox/Workshop2013/Work/R/ANN")
 lsos(pat="locus.select|*.mRMR")
 save(list=ls(pattern="*.mRMR"),file="lassoSelected.Rdata")	## save
-    save(list=ls(pattern="locus.select"),file="mRMRselected.Rdata")	## save
-load("", .GlobalEnv)
+save(list=ls(pattern="locus.select"),file="mRMRselected.Rdata")	## save
+load("lassoSelected.Rdata", .GlobalEnv)
