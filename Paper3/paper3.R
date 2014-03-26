@@ -99,7 +99,7 @@ dim(lasso.select)
 ## Choosing the right Hyper-parameters. GRID ANALYSIS
 require(caret)
 dat <- data.frame(y=y, lasso.select); dim(dat)
-ctl=expand.grid(.size=seq(1,20,length=50), .decay=10^seq(-1,-5,length=50))	## nnet
+ctl=expand.grid(.size=seq(1,20,length=40), .decay=10^seq(-1,-5,length=40))	## nnet
 #ctl=expand.grid(.mtry=seq(1:15),.coefReg=10^seq(-1,-3,length=40),.coefImp=10^seq(-1,-2,length=40))## Regularized Random forest (RRF)
 #ctl=expand.grid(.C=seq(1:20), .sigma=10^seq(-1,-3,length=40))	## svmRadial
 #ctl=expand.grid(.ncomp=seq(1:15))	# PCR
@@ -107,7 +107,7 @@ ctl=expand.grid(.size=seq(1,20,length=50), .decay=10^seq(-1,-5,length=50))	## nn
 #ctl=expand.grid(.lambda=10^seq(10,-2,length=100))	## Ridge
 set.seed(1445612321)
 modelTune.reg(dat,train,test,method="nnet",folds=10,r=5,tune=10,ctl)	# Tune hyper-parameters
-model.reg(dat,train,test,method="nnet",folds=10,r=5,tune=10)
+model.reg(dat,train,test,method="pcr",folds=10,r=5,tune=10)
 ## Regression
 model.clas(dat,train,test,method="pls",folds=10,r=5,tune=10)
 modelTune.clas(dat,train,test,method="pls",folds=10,r=5,tune=10,ctl)
@@ -129,23 +129,18 @@ require(foreach)
 require(doSNOW)
 cl <- makeCluster(3)
 registerDoSNOW(cl)
-#ctl=expand.grid(.size=0.5, .decay=0.03)	## nnet
 ctl=expand.grid(.size=3, .decay=0)	## nnet
-#ctl=expand.grid(.C=, .sigma=0.27)	## svmRadial
-#ctl=expand.grid(.C=10^seq(1,-4,length=100), .degree=10^seq(1,-1,length=40), .scale=10^seq(1,-3,length=40))	## svmPoly
-#ctl=expand.grid(.alpha=seq(0.1,1,0.1), .lambda=10^seq(10, -4, length=100))	## glmnet
-#ctl=expand.grid(.n.trees=100, .interaction.depth=1, .shrinkage=.001)	## Boosting (not working)
-#ctl=expand.grid(.mtry=23)	## Random forest
+ctl=expand.grid(.mtry=4,.coefReg=0.3,.coefImp=0.2)## Regularized Random forest (RRF)
+#ctl=expand.grid(.C=8, .sigma=0.09)	## svmRadial
+#ctl=expand.grid(.ncomp=1)	# PCR
+#ctl=expand.grid(.mstop=50,.prune=no)	## glmboost
+#ctl=expand.grid(.lambda=0.1)	## Ridge
 dat <- data.frame(y=y, lasso.select); dim(dat)
 set.seed(1445612321)
-bagging(dat[train,],dat[test,],m=1.1,ite=100,methods="ridge",tune=10)
-## for testing
-baggingTune(dat[train,],dat[test,],m=1.1,ite=100,methods="nnet",tune=10,gridZ=ctl)
-## For tuning the hyper-parameters
-bagging.clas(dat[train,],dat[test,],m=1.1,ite=100,methods="nnet",tune=10)
-## For Classification
+baggingTune(dat[train,],dat[test,],m=1.1,ite=500,methods="RRF",tune=10,gridZ=ctl)## For tuning the hyper-parameters
+bagging(dat[train,],dat[test,],m=1.1,ite=100,methods="ridge",tune=10)## for testing
+bagging.clas(dat[train,],dat[test,],m=1.1,ite=100,methods="nnet",tune=10)## For Classification
 ## END RUN
-mean((modelbag - y[test])^2)		## Test set MSE for regression
 stopCluster(cl)		## close cluster only after finishing w all modelse
 
 ## COMPUTE RMSE
@@ -354,4 +349,4 @@ setwd("C:/Dropbox/Workshop2013/Work/R/ANN")
 lsos(pat="locus.select|*.mRMR")
 save(list=ls(pattern="*.mRMR"),file="lassoSelected.Rdata")	## save
 save(list=ls(pattern="locus.select"),file="mRMRselected.Rdata")	## save
-load("lassoSelected.Rdata", .GlobalEnv)
+load("mRMRselected.Rdata", .GlobalEnv)
