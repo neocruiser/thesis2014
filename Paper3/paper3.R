@@ -100,11 +100,11 @@ dim(lasso.select)
 require(caret)
 dat <- data.frame(y=y, lasso.select); dim(dat)
 ctl=expand.grid(.size=seq(1,20,length=50), .decay=10^seq(-1,-5,length=50))	## nnet
-#ctl=expand.grid(.C=, .sigma=0.27)	## svmRadial
-#ctl=expand.grid(.C=10^seq(1,-4,length=100), .degree=10^seq(1,-1,length=40), .scale=10^seq(1,-3,length=40))	## svmPoly
-#ctl=expand.grid(.alpha=seq(0.1,1,0.1), .lambda=10^seq(10, -4, length=100))	## glmnet
-#ctl=expand.grid(.n.trees=100, .interaction.depth=1, .shrinkage=.001)	## Boosting (not working)
-#ctl=expand.grid(.mtry=23)	## Random forest
+#ctl=expand.grid(.mtry=seq(1:15),.coefReg=10^seq(-1,-3,length=40),.coefImp=10^seq(-1,-2,length=40))## Regularized Random forest (RRF)
+#ctl=expand.grid(.C=seq(1:20), .sigma=10^seq(-1,-3,length=40))	## svmRadial
+#ctl=expand.grid(.ncomp=seq(1:15))	# PCR
+#ctl=expand.grid(.mstop=seq(10:1000,length=20),.prune=no)	## glmboost
+#ctl=expand.grid(.lambda=10^seq(10,-2,length=100))	## Ridge
 set.seed(1445612321)
 modelTune.reg(dat,train,test,method="nnet",folds=10,r=5,tune=10,ctl)	# Tune hyper-parameters
 model.reg(dat,train,test,method="nnet",folds=10,r=5,tune=10)
@@ -116,8 +116,8 @@ modelTune.clas(dat,train,test,method="pls",folds=10,r=5,tune=10,ctl)
 
 modelsRMSE <- read.table("clipboard", sep="\t", header=T);modelsRMSE
 library(lattice)
-xyplot(Gene1 + Gene2 + Gene3 + Gene4 + Gene5~Model, data=modelsRMSE, type=c("a","p"), pch =20,cex = 1,auto.key = list(space="top",points=T,lines=F))
-xyplot(Tree1 + Tree2 + Tree3 + Tree4 + Tree5~Model, data=modelsRMSE, type=c("a","p"), pch =20,cex = 1,auto.key = list(space="top",points=T,lines=F))
+xyplot(Gene1 + Gene2 + Gene3 + Gene4 + Gene5~Model, data=modelsRMSE, type=c("a","p"), pch =20,cex = 1,auto.key = list(space="top",points=T,lines=F),ylab = "Tested Genes",xlab="Tested base Learners")
+xyplot(subset1 + subset2 + subset3 + subset4 + subset5~Model, data=modelsRMSE, type=c("a","p"), pch =20,cex = 1,auto.key = list(space="top",points=T,lines=F),ylab = "Tested subgenes",xlab="Tested base Learners")
 xyplot(Gene1 + Gene2 + Gene3 + Gene4 + Gene5 ~ Model, data=modelsRMSE, type=c("a"),auto.key = list(space="top",points=F,lines=T))
 ## plot RMSE versus different learners
 
@@ -138,7 +138,7 @@ ctl=expand.grid(.size=3, .decay=0)	## nnet
 #ctl=expand.grid(.mtry=23)	## Random forest
 dat <- data.frame(y=y, lasso.select); dim(dat)
 set.seed(1445612321)
-bagging(dat[train,],dat[test,],m=1.1,ite=100,methods="nnet",tune=10)
+bagging(dat[train,],dat[test,],m=1.1,ite=100,methods="ridge",tune=10)
 ## for testing
 baggingTune(dat[train,],dat[test,],m=1.1,ite=100,methods="nnet",tune=10,gridZ=ctl)
 ## For tuning the hyper-parameters

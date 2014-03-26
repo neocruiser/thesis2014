@@ -58,9 +58,9 @@ bagging <- function(training, testing, m=10, ite=2, methods,tune=5){
                                                        preProc=c("center","scale"))
 	predict(Train.me, newdata=testing,type="raw")
 })
-	RMSE <- mean((Predd - testing[,1])^2)		## Test set MSE for regression
-        ploted <- plot(Train.me)
-        output <- list(Time.Lapsed=lapsed,RMSE=RMSE,ploted)
+        predicted <- rowMeans(Predd)
+	RMSE <- mean((predicted - testing[,1])^2)		## Test set MSE for regression
+        output <- list(Time.Lapsed=lapsed,Predicted.Raw.data=predicted,RMSE=RMSE)
         return(output)
 }
 
@@ -79,8 +79,9 @@ baggingTune <- function(training, testing, m=10, ite=2, methods,tune=5,gridZ){
                                                        preProc=c("center","scale"))
 	predict(Train.me, newdata=testing,type="raw")
 })
-	RMSE <- mean((Predd - testing[,1])^2)		## Test set MSE for regression
-        output <- list(Time.Lapsed=lapsed,RMSE=RMSE)
+        predicted <- rowMeans(Predd)
+	RMSE <- mean((predicted - testing[,1])^2)		## Test set MSE for regression
+        output <- list(Time.Lapsed=lapsed,Predicted.Raw.data=predicted,RMSE=RMSE)
         return(output)
 }
 
@@ -101,9 +102,9 @@ bagging.clas <- function(training, testing, m=10, ite=2, methods,tune=5){
                                                        preProc=c("center","scale")))
 	predict(Train.me, newdata=testing,type="raw")
 })
-	ploted <- plot(Train.me)
-        conf.mat <- confusionMatrix(data=Predd, dat[test,1])	## confusion matrix for classification
-        output <- list(TimedModel=timed,TimedBagging=lapsedy,ploted,ConfusionMatrix=conf.mat)
+        predicted <- rowMeans(Predd)
+        conf.mat <- confusionMatrix(data=predicted, dat[test,1])	## confusion matrix for classification
+        output <- list(TimedModel=timed,TimedBagging=lapsedy,ConfusionMatrix=conf.mat)
         return(output)
 }
 
