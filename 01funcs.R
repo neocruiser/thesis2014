@@ -698,7 +698,7 @@ model.reg <- function(dat,train,test,method,folds=10,rep=5,tune){
     ploted <- plot(modelTrain)
     Predd <- predict(modelTrain, newdata=dat[test,], type="raw")
     rmse <- mean((Predd - y[test])^2)		## Test set MSE for regression
-    output <- list(ploted,TimeLapsed=lapsed, Hyperparameters=modelTrain$bestTune, RMSE=rmse)
+    output <- list(ploted,TimeLapsed=lapsed,Prediction.Estimates=Predd,Hyperparameters=modelTrain$bestTune, RMSE=rmse)
     return(output)
 }
 ## require(caret). Regression. Train model and test on independant test set return(RMSE)
@@ -714,7 +714,7 @@ modelTune.reg <- function(dat,train,test,method,folds=10,rep=5,tune,ctl){
     ploted <- plot(modelTrain)
     Predd <- predict(modelTrain, newdata=dat[test,], type="raw")
     rmse <- mean((Predd - y[test])^2)		## Test set MSE for regression
-    output <- list(ploted,TimeLapsed=lapsed, Hyperparameters=modelTrain$bestTune, RMSE=rmse)
+    output <- list(ploted,TimeLapsed=lapsed,Prediction.Estimates=Predd, Hyperparameters=modelTrain$bestTune, RMSE=rmse)
     return(output)
 }
 ## require(caret). Regression. Uses GRID for HYPERPARAMETER tuning. Train model and test on independant test set return(RMSE)

@@ -22,16 +22,16 @@ y <- c(rep("L",9), rep("PL",6), rep("L",3),rep("PL",4))
 ##############################
 # Filter subset selection
 ##############################
-hi.x <- set.var(x,1,5000)
+hi.x <- set.var(x,1,2000)
 range(apply(hi.x, 2, var))
 cor.x <- cor(hi.x); summary(cor.x[upper.tri(cor.x)])
 ## Unsupervised gene selection based on high variance (paper3)
 
 require(mRMRe)
-feature.select <- new("mRMRe.Data",data=data.frame(hi.x[,1:5000, drop=F])); gc()
+feature.select <- new("mRMRe.Data",data=data.frame(hi.x[,1:1500, drop=F])); gc()
 ## extract data
 set.seed(1445612321)
-locus.select <- new("mRMRe.Filter", data=feature.select, target_indices=1:5, levels=c(1000,1,1,1,1), continuous_estimator="spearman"); gc()
+locus.select <- new("mRMRe.Filter", data=feature.select, target_indices=1, levels=c(500,1), continuous_estimator="spearman"); gc()
 ## feature select min redundant max relevant genes
 range_correlation(locus.select,n=1,t=1,hi.x,method="spearman")	# n=gene(set w target_indices); t=different gene mashups
 ## view range of correlated selected features
@@ -40,16 +40,22 @@ length(locus)
 ## extract LOCUS names
 ## Parallelized mRMR ensemble Feature selection
 
+mmcDat <- means[rownames(means) %in% locus,]
+names(mmcDat)
+setwd("~/Downloads")
+write.csv(mmcDat[,-c(1,2)], "mmc500.3.csv",quote=F)
+## Extract filtered Locus to MMC
+
 ##############################
 # Training/Testing
 ##############################
-foo <- hi.x[,locus];dim(foo)
-train <- sample(1:nrow(foo), 2*nrow(foo)/2.5); length(train)
+foo2 <- hi.x[,locus];dim(foo2)
+train <- sample(1:nrow(foo2), 2*nrow(foo2)/2.5); length(train)
 test <- -train
 y[test]; length(y[test])
 ## prepare training/testing sets
 set.seed(1445612321)
-dat <- data.frame(y=y, foo)
+dat <- data.frame(y=y, foo2)
 y <- as.vector(model.matrix(~y,dat)[,2])
 #y <- c(rep(0,6),rep(1,9),rep(-1,7))	## dummy variables for 3 levels None, Coc, Tiso
 
@@ -61,22 +67,22 @@ y <- as.vector(model.matrix(~y,dat)[,2])
 grid <- 10^seq(10, -2, length=100)
 require(glmnet)
 set.seed(1445612321)
-lasso.mod <- glmnet(foo[train,],y[train], alpha=1, lambda=grid, family = "gaussian", standardize=T, type.gaussian = "naive")
+lasso.mod <- glmnet(foo2[train,],y[train], alpha=0.4, lambda=grid, family = "gaussian", standardize=T, type.gaussian = "naive")
 ## (1) Model Training. Select the kernel function and associated kernel parameters
 #coef(lasso.mod, s=0)
 #par(mfrow = c(2,2));
 plot(lasso.mod, xvar="lambda", label=T)
 plot(lasso.mod, xvar="dev", label=T) 	## fraction deviance explained =R2
-system.time(cv.out <- cv.glmnet(foo[train,], y[train], alpha=1, family="gaussian", standardize=T, nfolds = 10, type.gaussian="naive"))
+system.time(cv.out <- cv.glmnet(foo2[train,], y[train], alpha=0.4, family="gaussian", standardize=T, nfolds = 10, type.gaussian="naive"))
 ## (2) Regularization. Cross validation for hyperparameter tuning. Optimization of model selection to avoid overfitting
 par(mfrow = c(1,1)); plot(cv.out)
 bestlam <- cv.out$lambda.min; bestlam
-lasso.bestlam <- coef(lasso.mod, s=bestlam)
-#bestlam <- cv.out$lambda.1se; bestlam
+#lasso.bestlam <- coef(lasso.mod, s=bestlam)
+bestlam <- cv.out$lambda.1se; bestlam
 ## Select the best hyperparameter
-lasso.pred <- predict(lasso.mod, s=bestlam, newx=foo[test,], type="nonzero"); str(lasso.pred)
-lasso.pred <- predict(lasso.mod, s=bestlam, newx=foo[test,], type="response"); lasso.pred
-lasso.pred <- predict(lasso.mod, s=bestlam, newx=foo[test,], type="class")
+lasso.pred <- predict(lasso.mod, s=bestlam, newx=foo2[test,], type="nonzero"); str(lasso.pred)
+lasso.pred <- predict(lasso.mod, s=bestlam, newx=foo2[test,], type="response"); lasso.pred
+lasso.pred <- predict(lasso.mod, s=bestlam, newx=foo2[test,], type="class")
 table(lasso.pred, y[test])		## Confusion matrix for classification
 mean((lasso.pred - y[test])^2)		## Test set MSE for regression
 lasso.coef <- predict(lasso.mod, s=bestlam, type = "coefficients")
@@ -91,6 +97,7 @@ means[rownames(means) %in% final.select,2]
 lasso.select <- x[,foo]
 dim(lasso.select)
 ## extract genes from model selection
+means[rownames(means) %in% final.select,]
 ## LASSO (from the GLM package)
 
 ##############################
@@ -99,15 +106,15 @@ dim(lasso.select)
 ## Choosing the right Hyper-parameters. GRID ANALYSIS
 require(caret)
 dat <- data.frame(y=y, lasso.select); dim(dat)
-ctl=expand.grid(.size=seq(1,20,length=40), .decay=10^seq(-1,-5,length=40))	## nnet
+#ctl=expand.grid(.size=seq(1,20,length=40), .decay=10^seq(-1,-5,length=40))	## nnet
 #ctl=expand.grid(.mtry=seq(1:15),.coefReg=10^seq(-1,-3,length=40),.coefImp=10^seq(-1,-2,length=40))## Regularized Random forest (RRF)
 #ctl=expand.grid(.C=seq(1:20), .sigma=10^seq(-1,-3,length=40))	## svmRadial
 #ctl=expand.grid(.ncomp=seq(1:15))	# PCR
 #ctl=expand.grid(.mstop=seq(10:1000,length=20),.prune=no)	## glmboost
 #ctl=expand.grid(.lambda=10^seq(10,-2,length=100))	## Ridge
 set.seed(1445612321)
-modelTune.reg(dat,train,test,method="nnet",folds=10,r=5,tune=10,ctl)	# Tune hyper-parameters
-model.reg(dat,train,test,method="pcr",folds=10,r=5,tune=10)
+nnet0 <- model.reg(dat,train,test,method="nnet",folds=10,r=5,tune=10)
+nnet0 <- modelTune.reg(dat,train,test,method="nnet",folds=10,r=5,tune=10,ctl)	# Tune hyper-parameters
 ## Regression
 model.clas(dat,train,test,method="pls",folds=10,r=5,tune=10)
 modelTune.clas(dat,train,test,method="pls",folds=10,r=5,tune=10,ctl)
@@ -118,7 +125,7 @@ modelsRMSE <- read.table("clipboard", sep="\t", header=T);modelsRMSE
 library(lattice)
 xyplot(Gene1 + Gene2 + Gene3 + Gene4 + Gene5~Model, data=modelsRMSE, type=c("a","p"), pch =20,cex = 1,auto.key = list(space="top",points=T,lines=F),ylab = "Tested Genes",xlab="Tested base Learners")
 xyplot(subset1 + subset2 + subset3 + subset4 + subset5~Model, data=modelsRMSE, type=c("a","p"), pch =20,cex = 1,auto.key = list(space="top",points=T,lines=F),ylab = "Tested subgenes",xlab="Tested base Learners")
-xyplot(Gene1 + Gene2 + Gene3 + Gene4 + Gene5 ~ Model, data=modelsRMSE, type=c("a"),auto.key = list(space="top",points=F,lines=T))
+xyplot(iter100 + iter200 + iter600 + iter1000 + iter2000 + iter5000 ~ Model, data=modelsRMSE, type=c("a","p"),pch=20,cex=1,auto.key = list(space="top",points=F,lines=T),ylab = "Bagging Iterations",xlab="Tested base Learners",ylim=c(0.08,6.5e-8))
 ## plot RMSE versus different learners
 
 ##############################
@@ -129,24 +136,25 @@ require(foreach)
 require(doSNOW)
 cl <- makeCluster(3)
 registerDoSNOW(cl)
-ctl=expand.grid(.size=3, .decay=0)	## nnet
-ctl=expand.grid(.mtry=4,.coefReg=0.3,.coefImp=0.2)## Regularized Random forest (RRF)
+ctl=expand.grid(.size=17, .decay=0)	## nnet
+#ctl=expand.grid(.mtry=4,.coefReg=0.3,.coefImp=0.2)## Regularized Random forest (RRF)
 #ctl=expand.grid(.C=8, .sigma=0.09)	## svmRadial
 #ctl=expand.grid(.ncomp=1)	# PCR
-#ctl=expand.grid(.mstop=50,.prune=no)	## glmboost
+#ctl=expand.grid(.C=0.2)	## svmLinear
+#ctl=expand.grid(.mstop=50,.prune="no")	## glmboost
 #ctl=expand.grid(.lambda=0.1)	## Ridge
 dat <- data.frame(y=y, lasso.select); dim(dat)
 set.seed(1445612321)
-baggingTune(dat[train,],dat[test,],m=1.1,ite=500,methods="RRF",tune=10,gridZ=ctl)## For tuning the hyper-parameters
-bagging(dat[train,],dat[test,],m=1.1,ite=100,methods="ridge",tune=10)## for testing
+nnet05 <- bagging(dat[train,],dat[test,],m=1.1,ite=50,methods="nnet",tune=10)## for testing
+nnet6 <- baggingTune(dat[train,],dat[test,],m=1.1,ite=200,methods="nnet",tune=10,gridZ=ctl)## For tuning the hyper-parameters
 bagging.clas(dat[train,],dat[test,],m=1.1,ite=100,methods="nnet",tune=10)## For Classification
 ## END RUN
 stopCluster(cl)		## close cluster only after finishing w all modelse
 
 ## COMPUTE RMSE
-ensemble.pred <- (gbbag+rfbag)/2
-ensemble.pred <- (gbbag*2+rfbag)/3
-ensemble.pred <- (gbbag+rfbag*2)/3
+ensemble.pred <- (sr1[[2]]+pcr1K[[2]])/2
+ensemble.pred <- (sr1[[2]]*2+pcr1K[[2]])/3
+ensemble.pred <- (sr1[[2]]+pcr1K[[2]]*2)/3
 mean((ensemble.pred - y[test])^2)		## Test set MSE for regression
 ## Bagging
 
@@ -349,4 +357,4 @@ setwd("C:/Dropbox/Workshop2013/Work/R/ANN")
 lsos(pat="locus.select|*.mRMR")
 save(list=ls(pattern="*.mRMR"),file="lassoSelected.Rdata")	## save
 save(list=ls(pattern="locus.select"),file="mRMRselected.Rdata")	## save
-load("mRMRselected.Rdata", .GlobalEnv)
+#load("mRMRselected.Rdata", .GlobalEnv)
