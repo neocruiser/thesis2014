@@ -755,6 +755,21 @@ modelTune.clas <- function(dat,train,test,method,folds=10,rep=5,tune){
 ## require(caret). Classification. GRID search HYPERPARAMETERS tuning. Train model and test on independant test set return(classification error)
 
 
+ensemble.mean <- function(a,b){
+E.pred1 <- (a[[2]]+b[[2]])/2
+E.pred2 <- (a[[2]]*2+b[[2]])/3
+E.pred3 <- (a[[2]]+b[[2]]*2)/3
+M1 <- mean((E.pred1 - y[test])^2)		## Test set MSE for regression
+M2 <- mean((E.pred2 - y[test])^2)		## Test set MSE for regression
+M3 <- mean((E.pred3 - y[test])^2)		## Test set MSE for regression
+ploted <- plot(y=c(M1,M2,M3),x=1:3, lty=5,cex=1,pch=21:23,type="b",bg="red")
+output <- list(ploted,model1.ab=M1,model2.2ab=M2,model3.a2b=M3)
+return(output)
+}
+## y[test] is the testing set (29% of the data) PAPER 3
+## Ensemble Methods, calculate RMSE of joint predictions. Weighted averaging of 2 base learners
+
+
 
 
 
