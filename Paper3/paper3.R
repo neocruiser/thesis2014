@@ -43,7 +43,7 @@ length(locus)
 mmcDat <- means[rownames(means) %in% locus,]
 names(mmcDat)
 setwd("~/Downloads")
-write.csv(mmcDat[,-c(1,2)], "mmc500.3.csv",quote=F)
+write.csv(mmcDat[,-c(1,2)], "MMC_locus_29.csv",quote=F)
 ## Extract filtered Locus to MMC
 
 ##############################
@@ -78,7 +78,7 @@ system.time(cv.out <- cv.glmnet(foo2[train,], y[train], alpha=0.4, family="gauss
 par(mfrow = c(1,1)); plot(cv.out)
 bestlam <- cv.out$lambda.min; bestlam
 #lasso.bestlam <- coef(lasso.mod, s=bestlam)
-bestlam <- cv.out$lambda.1se; bestlam
+#bestlam <- cv.out$lambda.1se; bestlam
 ## Select the best hyperparameter
 lasso.pred <- predict(lasso.mod, s=bestlam, newx=foo2[test,], type="nonzero"); str(lasso.pred)
 lasso.pred <- predict(lasso.mod, s=bestlam, newx=foo2[test,], type="response"); lasso.pred
@@ -97,7 +97,7 @@ means[rownames(means) %in% final.select,2]
 lasso.select <- x[,foo]
 dim(lasso.select)
 ## extract genes from model selection
-means[rownames(means) %in% final.select,]
+mmcDat <- means[rownames(means) %in% final.select,]
 ## LASSO (from the GLM package)
 
 ##############################
@@ -113,7 +113,7 @@ dat <- data.frame(y=y, lasso.select); dim(dat)
 #ctl=expand.grid(.mstop=seq(10:1000,length=20),.prune=no)	## glmboost
 #ctl=expand.grid(.lambda=10^seq(10,-2,length=100))	## Ridge
 set.seed(1445612321)
-nnet0 <- model.reg(dat,train,test,method="nnet",folds=10,r=5,tune=10)
+ridge_grid<- model.reg(dat,train,test,method="ridge",folds=10,r=5,tune=10)
 nnet0 <- modelTune.reg(dat,train,test,method="nnet",folds=10,r=5,tune=10,ctl)	# Tune hyper-parameters
 ## Regression
 model.clas(dat,train,test,method="pls",folds=10,r=5,tune=10)
@@ -125,7 +125,8 @@ modelsRMSE <- read.table("clipboard", sep="\t", header=T);modelsRMSE
 library(lattice)
 xyplot(Gene1 + Gene2 + Gene3 + Gene4 + Gene5~Model, data=modelsRMSE, type=c("a","p"), pch =20,cex = 1,auto.key = list(space="top",points=T,lines=F),ylab = "Tested Genes",xlab="Tested base Learners")
 xyplot(subset1 + subset2 + subset3 + subset4 + subset5~Model, data=modelsRMSE, type=c("a","p"), pch =20,cex = 1,auto.key = list(space="top",points=T,lines=F),ylab = "Tested subgenes",xlab="Tested base Learners")
-xyplot(iter100 + iter200 + iter600 + iter1000 + iter2000 + iter5000 ~ Model, data=modelsRMSE, type=c("a","p"),pch=20,cex=1,auto.key = list(space="top",points=F,lines=T),ylab = "Bagging Iterations",xlab="Tested base Learners",ylim=c(0.08,6.5e-8))
+xyplot(iter100 + iter200 + iter600 + iter1000 + iter2000 + iter5000 ~ Model, data=modelsRMSE, type=c("a","p"),pch=20,cex=1,auto.key = list(space="top",points=F,lines=T),ylab = "Bagging Iterations",xlab="Tested base Learners")
+xyplot(iter100 + iter200 + iter600 + iter1000 + iter2000 + iter5000 ~ Model, data=modelsRMSE, type=c("a","p"),cex=1,lty=1, auto.key = list(columns=6,points=T,lines=F,title="Number of iterations"),ylab = "System iteration time (s)",xlab="Tested base Learners")
 ## plot RMSE versus different learners
 
 ##############################
@@ -136,26 +137,27 @@ require(foreach)
 require(doSNOW)
 cl <- makeCluster(3)
 registerDoSNOW(cl)
-ctl=expand.grid(.size=17, .decay=0)	## nnet
-#ctl=expand.grid(.mtry=4,.coefReg=0.3,.coefImp=0.2)## Regularized Random forest (RRF)
-#ctl=expand.grid(.C=8, .sigma=0.09)	## svmRadial
+#ctl=expand.grid(.size=17, .decay=0)	## nnet
+ctl=expand.grid(.mtry=0,.coefReg=0.89,.coefImp=0.5556)## Regularized Random forest (RRF)
+#ctl=expand.grid(.C=8, .sigma=0.5556)	## svmRadial
 #ctl=expand.grid(.ncomp=1)	# PCR
-#ctl=expand.grid(.C=0.2)	## svmLinear
-#ctl=expand.grid(.mstop=50,.prune="no")	## glmboost
-#ctl=expand.grid(.lambda=0.1)	## Ridge
+#ctl=expand.grid(.C=1)	## svmLinear
+#ctl=expand.grid(.mstop=500,.prune="no")	## glmboost
+#ctl=expand.grid(.lambda=0.007499)	## Ridge
 dat <- data.frame(y=y, lasso.select); dim(dat)
 set.seed(1445612321)
-nnet05 <- bagging(dat[train,],dat[test,],m=1.1,ite=50,methods="nnet",tune=10)## for testing
-nnet6 <- baggingTune(dat[train,],dat[test,],m=1.1,ite=200,methods="nnet",tune=10,gridZ=ctl)## For tuning the hyper-parameters
+RFF_bag500<- baggingTune(dat[train,],dat[test,],m=1.1,ite=500,methods="RRF",tune=10,gridZ=ctl)## For tuning the hyper-parameters
+test100 <- bagging(dat[train,],dat[test,],m=1.1,ite=100,methods="ridge",tune=10)## for testing
 bagging.clas(dat[train,],dat[test,],m=1.1,ite=100,methods="nnet",tune=10)## For Classification
 ## END RUN
 stopCluster(cl)		## close cluster only after finishing w all modelse
 
 ## COMPUTE RMSE
-ensemble.pred <- (sr1[[2]]+pcr1K[[2]])/2
-ensemble.pred <- (sr1[[2]]*2+pcr1K[[2]])/3
-ensemble.pred <- (sr1[[2]]+pcr1K[[2]]*2)/3
-mean((ensemble.pred - y[test])^2)		## Test set MSE for regression
+a=nnet_bag100
+b=ridge_bag100
+
+ensemble.mean(nnet_bag100,ridge_bag100)
+
 ## Bagging
 
 ##############################
@@ -354,7 +356,8 @@ sqrt((sum((stages[test,1] - Predd)^2))/nrow(stages[test,]))		## compute RMSE (RE
 ##############################
 
 setwd("C:/Dropbox/Workshop2013/Work/R/ANN")
-lsos(pat="locus.select|*.mRMR")
+lsos(pat="locus.select|mRMR|grid|bag")
+save(list=ls(pattern="mRMR|grid|bag"),file="EnsembleMethods.Rdata")	## save
 save(list=ls(pattern="*.mRMR"),file="lassoSelected.Rdata")	## save
 save(list=ls(pattern="locus.select"),file="mRMRselected.Rdata")	## save
 #load("mRMRselected.Rdata", .GlobalEnv)

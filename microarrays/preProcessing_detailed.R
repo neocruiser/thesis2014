@@ -179,7 +179,7 @@ save(list=ls(pattern=""),file="paper3.Rdata")
 ## experimental with Lmfit function (If not interested continue at section 5)
 ## (17) design matrix + linear model (page 53 of limma userguide)
 ## first design (must run contrast.fit)
-lev <- c("E","T","Vc","Pc","Jc","Vi","Pi","Ji")
+lev <- c("E","T","VC","PC","JC","VT","PT","JT")
 f <- factor(targets$Cy5)
 design <- model.matrix(~0+f)
 colnames(design) <- levels(f)
@@ -187,23 +187,24 @@ design
 
 ## choose one contrast matrix ...
 ## which genes respond in T, Vc, Pc, and Jc (cocktail) (Setup 1, nestedF)
-cont.matrix <- makeContrasts(Troco=(T-E), Veliger=(Vc-T), Pediveliger=(Pc-Vc), Juvnile=(Jc-Pc), levels=design)
+cont.matrix <- makeContrasts(Troco=(T-E), Veliger=(VC-T), Pediveliger=(PC-VC), Juvnile=(JC-PC), levels=design)
 
 ## which genes respond in T, Vi, Pi, and Ji (ISO) (Setup 2, nestedF)
-cont.matrix <- makeContrasts(Troco=(T-E), Veliger=(Vi-T), Pediveliger=(Pi-Vi), Juvnile=(Ji-Pi), levels=design)
+cont.matrix <- makeContrasts(Troco=(T-E), Veliger=(VT-T), Pediveliger=(PT-VT), Juvnile=(JT-PT), levels=design)
 
 ## which genes respond differently over time between the two treatments ? (Setup 3, seperate)
-cont.matrix <- makeContrasts(Veliger=(Vi-E)-(Vc-T),Pediveliger=(Pi-Vi)-(Pc-Vc),Juvenile=(Ji-Pi)-(Jc-Pc), levels=design)
+cont.matrix <- makeContrasts(Veliger=(VT-E)-(VC-T),Pediveliger=(PT-VT)-(PC-VC),Juvenile=(JT-PT)-(JC-PC), levels=design)
 
 ## Treatment main effect (Setup 4, nestedF)
-cont.matrix <- makeContrasts(Veliger=(Vi-E)+(Vc-T),Pediveliger=(Pi-Vi)+(Pc-Vc),Juvenile=(Ji-Pi)+(Jc-Pc), levels=design)
+cont.matrix <- makeContrasts(Veliger=(VT-E)+(VC-T),Pediveliger=(PT-VT)+(PC-VC),Juvenile=(JT-PT)+(JC-PC), levels=design)
 
 ## Stage of development main effect (Setup 5, nestedF)
-cont.matrix <- makeContrasts(Veliger=(Vc+T)-(Vi-E),Pediveliger=(Pc+Vc)-(Pi-Vi),Juvenile=(Jc+Pc)-(Ji-Pi), levels=design)
+cont.matrix <- makeContrasts(Veliger=(VC+T)-(VT-E),Pediveliger=(PC+VC)-(PT-VT),Juvenile=(JC+PC)-(JT-PT), levels=design)
 ## interaction age-treatment ? (The interaction gives same results as Setup 5)
 
 
 ## Group mean parametrization
+set.seed(3467)
 fit <- lmFit(MA,design)
 fit2 <- contrasts.fit(fit, cont.matrix)
 fit2 <- eBayes(fit2)
@@ -212,7 +213,6 @@ coefTests <- decideTests(fit2,method="nestedF")
 vennDiagram(coefTests)
 
 #x11(title="PlotMA of MA linear model");plotMA(figx <- topTable(fit2, adjust="BH",number=25,coef=1)	## coef is dependent on the ncol(contrast.matrix)
-x
 x<-topTable(fit2, adjust="BH",number=4000)
 x<-x[!duplicated(x$ProbeName),]
 head(x);tail(x);dim(x)
@@ -278,3 +278,56 @@ points(results$Vc1, results$T1, pch=19, cex=0.5, col="red")
 
 #remove all objects
 rm(list=ls())
+
+setwd("C:/Dropbox/Workshop2013/Work/R/ANN")
+load("EnsembleMethods.Rdata", .GlobalEnv)
+lsos(pat="mRMR")
+## Extract Locus coefficients for MMC
+mrmr500 <- cust[cust$locus %in% locus_mRMR500, ]
+mrmr29 <- cust[cust$locus %in% locus_mRMR29,]
+# extract cust
+fit500 <- fit2[fit2$genes$ProbeName %in% mrmr500$cust,]
+fit29 <- fit2[fit2$genes$ProbeName %in% mrmr29$cust,]
+## extract coefficients
+dat500 <- cbind(fit500$genes$ProbeName, fit500$coefficients)
+dat500v2 <- merge(dat500,mrmr500, by.x='V1',by.y='cust')
+dat500v3 <- dat500v2[! duplicated(dat500v2$locus),]; dim(dat500v3)
+## prepare the filtere mRMR 500 DETs
+dat29 <- cbind(fit29$genes$ProbeName, fit29$coefficients)
+dat29v2 <- merge(dat29,mrmr29,by.x = 'V1',by.y = "cust")
+dat29v3 <- dat29v2[! duplicated(dat29v2$locus),]; dim(dat29v3)
+## prepare the trained lasso 29 DETs
+names(dat29v3)
+setwd("~/Downloads")
+write.csv(dat29v3[,c(5,2:4)], "setup5.MMC.29.csv",quote=F,row.names=F)
+## EXTRACT genes for MMC
+
+## Prepare Table for LaTeX
+mmc29_output <- read.table("clipboard", sep=",", header=T)
+final.29 <- merge(dat29v3, mmc29_output, by.x = "locus",by.y = "Gene")
+final.29 <- final.29[order(final.29[,7]),]
+write.table(final.29[,c(1,6:10)],"locus29.txt",sep="\t",quote = F,row.names = F)
+## Extract filtered Locus to MMC
+
+## Copy/paste the MMC tabulars from browser
+setup5 <- read.table("clipboard", sep=",", header=T)
+datAll <- merge(setup1, setup2, by = "Gene")
+dataAll <- data.frame(Gene=datAll[,1],setup1=datAll$Module.x,setup2=datAll$Module.y)
+dataAll2 <- data.frame(Gene=datAll[,1],setup3=datAll$Module.x,setup4=datAll$Module.y)
+all.MMC <- merge(dataAll,dataAll2,by = "Gene")
+all.MMC <- merge(all.MMC,setup5[,1:2],by="Gene")
+## prepare matrix
+
+all.MMC <- merge(dat29v3[,5:6],all.MMC,by.x = "locus",by.y = "Gene")
+require(xtable)
+x <- xtable(all.MMC)
+print(x,include.rownames=T)
+## print LaTeX table
+
+require(lattice)
+xyplot(setup1+setup2+setup3+setup4+Module ~ as.numeric(rownames(all.MMC)), data=all.MMC, type=c("p","a","g"), ylab="MMC Clusters", xlab="Selected transcripts", pch=21, cex=1.5, auto.key = list(columns=5, title="Contrast",lines=T,points=F))
+
+
+
+
+
