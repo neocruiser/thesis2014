@@ -40,6 +40,7 @@ length(locus)
 ## extract LOCUS names
 ## Parallelized mRMR ensemble Feature selection
 
+## NO RUN
 mmcDat <- means[rownames(means) %in% locus,]
 names(mmcDat)
 setwd("~/Downloads")
@@ -98,7 +99,39 @@ lasso.select <- x[,foo]
 dim(lasso.select)
 ## extract genes from model selection
 mmcDat <- means[rownames(means) %in% final.select,]
+#write.table(mmcDat,"mmcDat.txt",quote=F,sep="\t")
 ## LASSO (from the GLM package)
+
+##############################
+# Hierarchical clustering
+##############################
+require(pvclust)
+require(gplots)
+myanova = as.matrix(mmcDat[,-c(1,2)])
+colnames(myanova) <- c(rep("Healthy", 15), rep("Deficient",7))
+colnames(myanova) <- c(rep("L",9), rep("PL",6), rep("L",3),rep("PL",4))
+colnames(myanova) <- c(rep("None", 6), rep("Cocktail", 9), rep("Tiso",7))
+colnames(myanova) <- c(rep("E",3), rep("T",3), rep("VC",3),rep("PC",3),rep("JC",3),rep("VT",3),rep("PT",3), rep("JT",1))
+#rownames(myanova) <- paste(seq(1:nrow(mmcDat)),sep="-",mmcDat[,2])
+rownames(myanova) <- mmcDat[,1]
+head(myanova)
+mydataanova <- t(scale(t(myanova)))
+source("http://faculty.ucr.edu/~tgirke/Documents/R_BioCond/My_R_Scripts/my.colorFct.R")
+hra <- hclust(as.dist(1-cor(t(mydataanova), method="pearson")), method="complete") ## ROWS (genes)
+hca <- hclust(as.dist(1-cor(mydataanova, method="pearson")), method="complete")	## COL (samples)
+heatmap(myanova, Rowv=as.dendrogram(hra), Colv=as.dendrogram(hca), col=my.colorFct(), scale="row")
+## to be continued in Heatmap.R
+
+
+##############################
+# Enrichment analysis
+##############################
+
+z=rownames(mmcDat)
+geneList <- factor(as.integer(geneNames %in% z))
+## extract locus names
+## continue from "Build top Go data"
+
 
 ##############################
 # Building classifier on subset model
@@ -113,7 +146,7 @@ dat <- data.frame(y=y, lasso.select); dim(dat)
 #ctl=expand.grid(.mstop=seq(10:1000,length=20),.prune=no)	## glmboost
 #ctl=expand.grid(.lambda=10^seq(10,-2,length=100))	## Ridge
 set.seed(1445612321)
-ridge_grid<- model.reg(dat,train,test,method="ridge",folds=10,r=5,tune=10)
+model.reg(dat,train,test,method="RRF",folds=10,r=5,tune=10)
 nnet0 <- modelTune.reg(dat,train,test,method="nnet",folds=10,r=5,tune=10,ctl)	# Tune hyper-parameters
 ## Regression
 model.clas(dat,train,test,method="pls",folds=10,r=5,tune=10)
@@ -123,11 +156,15 @@ modelTune.clas(dat,train,test,method="pls",folds=10,r=5,tune=10,ctl)
 
 modelsRMSE <- read.table("clipboard", sep="\t", header=T);modelsRMSE
 library(lattice)
-xyplot(Gene1 + Gene2 + Gene3 + Gene4 + Gene5~Model, data=modelsRMSE, type=c("a","p"), pch =20,cex = 1,auto.key = list(space="top",points=T,lines=F),ylab = "Tested Genes",xlab="Tested base Learners")
-xyplot(subset1 + subset2 + subset3 + subset4 + subset5~Model, data=modelsRMSE, type=c("a","p"), pch =20,cex = 1,auto.key = list(space="top",points=T,lines=F),ylab = "Tested subgenes",xlab="Tested base Learners")
+xyplot(Gene1 + Gene2 + Gene3 + Gene4 + Gene5~Model, data=modelsRMSE, type=c("a","p"),cex = 1.5, pch=21,auto.key = list(columns=5,points=F,lines=T,title='Uncorrelated genes'),ylab = "Root-mean-square error (RMSE)",xlab="Tested base Learners")
+## plot genes 1 to 5 from mRMR
+xyplot(subset1 + subset2 + subset3 + subset4 ~Model, data=modelsRMSE, type=c("a","p"), pch =21,cex = 1.5,auto.key = list(columns=4,points=F,lines=T,title='Correlated subgenes'),ylab = "Root-mean-square error (RMSE)",xlab="Tested base Learners")
+## plot subset trees to gene1 from mRMR
 xyplot(iter100 + iter200 + iter600 + iter1000 + iter2000 + iter5000 ~ Model, data=modelsRMSE, type=c("a","p"),pch=20,cex=1,auto.key = list(space="top",points=F,lines=T),ylab = "Bagging Iterations",xlab="Tested base Learners")
+## plot bagging iteration RMSEs for base learners
 xyplot(iter100 + iter200 + iter600 + iter1000 + iter2000 + iter5000 ~ Model, data=modelsRMSE, type=c("a","p"),cex=1,lty=1, auto.key = list(columns=6,points=T,lines=F,title="Number of iterations"),ylab = "System iteration time (s)",xlab="Tested base Learners")
-## plot RMSE versus different learners
+## plot bagging run time RMSEs for base learners
+
 
 ##############################
 # Ensemble Learning (bagging)
@@ -152,12 +189,14 @@ bagging.clas(dat[train,],dat[test,],m=1.1,ite=100,methods="nnet",tune=10)## For 
 ## END RUN
 stopCluster(cl)		## close cluster only after finishing w all modelse
 
-## COMPUTE RMSE
-a=nnet_bag100
-b=ridge_bag100
+## COMPUTE Ensemble RMSE
+## (1) load ensembleMethods.Rdata
+## (2) re-run y[test]
+ensemble.mean(svmLinear_bag2K,ridge_bag200)
 
-ensemble.mean(nnet_bag100,ridge_bag100)
-
+require(lattice)
+ensRMSE <- read.table("clipboard",sep="\t",header=T); ensRMSE
+xyplot(Method1+Method2+Method3~Model2|Model1,data=ensRMSE,type=c("p","a","g"),auto.key = list(columns=3,points=F,lines=T,title="Ensemble methods averaging"), ylab="Root-mean-square error (RMSE)",xlab="Tested learners",pch=21,cex=1)
 ## Bagging
 
 ##############################
@@ -165,20 +204,25 @@ ensemble.mean(nnet_bag100,ridge_bag100)
 ##############################
 ## START PCR
 pr.out <- prcomp(lasso.select, scale=T)
-par(mfrow = c(1,2))
 y <- c(rep("E",3), rep("T",3), rep("VC",3),rep("PC",3),rep("JC",3),rep("VT",3),rep("PT",3), rep("JT",1))
+y <- c(rep("E",3), rep("L",9), rep("PL",3), rep("L",6),rep("PL",1))
+y <- c(rep("E",3), rep("L",9), rep("PL",3), rep("LT",6),rep("PLT",1))
+y <- c(rep("Healthy", 15), rep("Deficient",7))
+y <- c(rep("None", 6), rep("Cocktail", 9), rep("Tiso",7))
+y <- c(rep("L",9), rep("PL",6), rep("L",3),rep("PL",4))
+par(mfrow = c(3,2))
 plot(pr.out$x[,1:2],col=Cols(y),pch=19)
 plot(pr.out$x[,c(1,3)],col=Cols(y),pch=19)
 ## 2D scatterplots
 require(scatterplot3d)
-par(mfrow = c(1,1))
-scatterplot3d(pr.out$x[,1:3], pch=16, color=Cols(y), type="h", lty.hplot = "dashed", angle = 55, scale.y = .7)
+scatterplot3d(pr.out$x[,1:3], pch=21, color=Cols(y), type="h", lty.hplot = "dashed", angle = 55, scale.y = .7)
 ## Plot 1 in 3D
 require(rgl)
-plot3d(pr.out$x[,1:3], size=5, col=Cols(y), type = "p", box=T, axes=T)
+plot3d(pr.out$x[,1:3], size=15, col=Cols(y), type = "p", box=T, axes=T,top=F)
 par3d(zoom = 1.1) # larger values make the image smaller
 par3d(windowRect = c(50, 50, 500, 500)) # make the window large
-text3d(pr.out$x[,1:3], text=y, font=1, cex=.6, adj=c(1,1))
+text3d(pr.out$x[,1:3], text=y, font=1, cex=0.8, adj=c(1,1.5))
+setwd("~/Downloads");rgl.postscript("PCR.eps",fmt="eps")
 ## plot 2 in 3D
 ## START recording
 M <- par3d("userMatrix") # save your settings to pass to the movie
@@ -192,92 +236,83 @@ movie3d(par3dinterp(userMatrix=list(M,rotate3d(M, pi, 1, 0, 0), rotate3d(M, pi, 
 summary(pr.out)
 pve <- 100*pr.out$sdev^2/sum(pr.out$sdev^2)
 plot(pr.out)
-par(mfrow=c(1,2))
 plot(pve, type="o", ylab = "PVE",xlab = "Principal Component", col="blue")
 plot(cumsum(pve), type="o",ylab = "Cumultive PVE", xlab = "Principal Component", col="brown3")
 ## (Unsupervised) Principal Componenent analysis (reduced dimension) (paper3)
 
 ##############################
+# Circos
+##############################
+setwd("~/Downloads")
+#save(list=ls(pattern="locus|opt|setup|mmc"),file="circos_MS3.Rdata")	## save
+load("circos_MS3.Rdata", .GlobalEnv)
+lsos(pat="locus|opt|setup|mmc")
+
+require(circlize)
+circos.test(optS3,5)
+## optS3= all correlations of setup III from the MMC csv file
+## 5= number of genes to be ploted
+
+
+##############################
 # Tryouts
 ##############################
 
-cv.err <- rep(1:5)
-for(i in 1:5){
-glm.fit <- glm(mpg~poly(horsepower, i), data = Auto)
-cv.err[i] <- cv.glm(Auto, glm.fit)$delta[1]
+## working
+mat <- t(optall[1:3,1:5,drop=F])
+#rownames(mat) = letters[1:3]
+#colnames(mat) = LETTERS[1:6]
+rn = rownames(mat)
+cn = colnames(mat)
+mat
+factors = c(rn,cn)
+factors = factor(factors, levels = factors)
+col_sum = apply(mat, 2, sum)
+row_sum = apply(mat, 1, sum)
+xlim = cbind(rep(0, ncol(mat)+nrow(mat)), c(row_sum, col_sum))
+par(mar = c(1, 1, 1, 1))
+circos.par(cell.padding = c(0, 0, 0, 0), clock.wise = FALSE,gap.degree = c(ncol(mat)+nrow(mat)), start.degree = 5)
+circos.initialize(factors = factors, xlim = xlim,sector.width = 2)
+#circos.clear()
+circos.trackPlotRegion(factors = factors, ylim = c(0, 1), bg.border = NA,
+bg.col = c("red", "green", "blue", rep("grey", 6)), track.height = 0.05,
+panel.fun = function(x, y) {
+sector.name = get.cell.meta.data("sector.index")
+xlim = get.cell.meta.data("xlim")
+circos.text(mean(xlim), 1.5, sector.name, adj = c(0.5, 0))
+if(sector.name %in% rn) {
+for(i in seq_len(ncol(mat))) {
+circos.lines(rep(sum(mat[sector.name, seq_len(i)]), 2), c(0, 1),
+col = "white")
 }
-cv.err
+} else if(sector.name %in% cn) {
+for(i in seq_len(nrow(mat))) {
+circos.lines(rep(sum(mat[ seq_len(i), sector.name]), 2), c(0, 1),
+col = "white")}}})
+col = c("#FF000020", "#00FF0020", "#0000FF20")
+for(i in seq_len(nrow(mat))) {
+for(j in seq_len(ncol(mat))) {
+circos.link(rn[i], c(sum(mat[i, seq_len(j-1)]), sum(mat[i, seq_len(j)])),
+cn[j], c(sum(mat[seq_len(i-1), j]), sum(mat[seq_len(i), j])),
+col = col[i], border = "white")}}
+circos.clear()
+## Build Circos
 
 
 
-pls_rf <- list(label = "PLS-RF",
-               library = c("pls", "randomForest"),
-               type = "Regression",
-               ## Tune over both parameters at the same time
-               parameters = data.frame(parameter = c('ncomp', 'mtry'),
-                                       class = c("numeric", 'numeric'),
-                                       label = c('#Components',
-                                                 '#Randomly Selected Predictors')),
-               grid = function(x, y, len = NULL) {
-                 grid <- expand.grid(ncomp = seq(1, min(ncol(x) - 1, len), by = 1),
-                                     mtry = 1:len)
-                 ## We can't have mtry > ncomp
-                 grid <- subset(grid, mtry <= ncomp)
-               },
-               loop = NULL,
-               fit = function(x, y, wts, param, lev, last, classProbs, ...) {
-                 ## First fit the pls model, generate the training set scores,
-                 ## then attach what is needed to the random forest object to
-                 ## be used later
-                 ## plsr only has a formula interface so create one data frame
-                 dat <- x
-                 dat$y <- y
-                 pre <- plsr(y~ ., data = dat, ncomp = param$ncomp)
-                 scores <- predict(pre, x, type = "scores")
-                 colnames(scores) <- paste("score", 1:param$ncomp, sep = "")
-                 mod <- randomForest(scores, y, mtry = param$mtry, ...)
-                 mod$projection <- pre$projection
-                 mod
-               },
-               predict = function(modelFit, newdata, submodels = NULL) {
-                 ## Now apply the same scaling to the new samples
-                 scores <- as.matrix(newdata)  %*% modelFit$projection
-                 colnames(scores) <- paste("score", 1:ncol(scores), sep = "")
-                 ## Predict the random forest model
-                 predict(modelFit, scores)
-               },
-               prob = NULL,
-               varImp = NULL,
-               predictors = function(x, ...) rownames(x$projection),
-               levels = function(x) x$obsLevels,
-               sort = function(x) x[order(x[,1]),])
+require(ggmap)
+require(rworldmap)
+par(mar=c(2,2,2,.5))
+newWorld <- getMap(resolution="high")
+plot(newWorld)
+geocode("magdalen islands")
+plot(newWorld, xlim=c(5,53), ylim=c(17.6,23),asp=1)
+## world map
 
-train <- sample(1:nrow(foo), 2*nrow(foo)/2.4); length(train)
-test <- -train
-y[test]; length(y[test])
-y <- c(rep("L",9), rep("PL",6), rep("L",3),rep("PL",4))
-dat <- data.frame(y=y, lasso.select); dim(dat)
-require(nnet)
-stages <- class.ind(dat[,1])
-dat <- data.frame(y=stages[,1], lasso.select); dim(dat)
-## create continuous regression matrix
-metaCtrl <- trainControl(method = "repeatedcv", repeats=3)
-set.seed(10934)
-Profile <- train(dat[,-1], dat[,1], method=pls_rf, preProc=c("center","scale"),tuneLength=10,ntree=500,trControl=metaCtrl)
-## Customized Train function with regression model fitting (Not working)
 
-require(gbm)
-set.seed(135662)
-boosted.model <- gbm(y~., data=dat[train,], distribution = "gaussian",n.trees=1000,interaction.depth = 4)
-## BOOSTING (sample size too small)
-require(randomForest)
-bagging.model <- randomForest(y~., data=dat, subset=train, mtry=23,importance=T)
-bagging.model
-bagging.pred <- predict(bagging.model, newdata = dat[test,])
-mean((bagging.pred-dat[test,1])^2)
-plot(bagging.pred,dat[test,1],type="b")
-## BAGGING (not working)
-
+require(qmap)
+qmap("Magdalen Islands", zoom=14)
+## specific place map
 
 sd.data <- scale(lasso.select)
 par(mfrow = c(1,1))
@@ -317,40 +352,6 @@ table(pred.te, dat.te$y)
 cat("\nMisclassification Error rate",(4/22)*100,"\n")
 ## support vector regression
 
-require(leaps)
-train <- sample(1:43000, 1000)
-dat <- data.frame(x[,train], y=as.factor(y))
-regfit.fwd <- regsubsets(y~., data=dat, method="backward", nvmax = 1000)
-reg.summary <- summary(regfit.fwd)
-plot(reg.summary$rss, type="l")
-plot(reg.summary$adjr2, type="l")
-## backward selection (not working)
-
-
-train <- sample(1:nrow(foo), 2*nrow(foo)/2.5); length(train)
-test <- -train
-y[test]; length(y[test])
-y <- c(rep("L",9), rep("PL",6), rep("L",3),rep("PL",4))
-dat <- data.frame(y=y, lasso.select); dim(dat)
-require(nnet)
-stages <- class.ind(dat[,1])
-dat <- data.frame(y=stages[,1], lasso.select); dim(dat)
-## create continuous regression matrix
-training <- dat[train,]
-testing <- dat[-train,]
-ctl=expand.grid(.mtry=17)	## Random forest
-ctl=expand.grid(.fL=1, .usekernel=1)	## Random forest
-ctl=expand.grid(.alpha=0.1, .lambda=0.9)	## Glmnet (lasso)
-set.seed(156934)
-## START RUN
-system.time(
-glmnetbag <- bagging(training,testing,m=3,ite=200,meth="glmnet",gridZ=ctl,tune=5))
-## END RUN
-sqrt((sum((stages[test,1] - Predd)^2))/nrow(stages[test,]))		## compute RMSE (REGRESSION)
-## BAGGING CUSTOM FUNCTION (not working)
-
-
-
 ##############################
 # SAVE
 ##############################
@@ -360,4 +361,4 @@ lsos(pat="locus.select|mRMR|grid|bag")
 save(list=ls(pattern="mRMR|grid|bag"),file="EnsembleMethods.Rdata")	## save
 save(list=ls(pattern="*.mRMR"),file="lassoSelected.Rdata")	## save
 save(list=ls(pattern="locus.select"),file="mRMRselected.Rdata")	## save
-#load("mRMRselected.Rdata", .GlobalEnv)
+load("EnsembleMethods.Rdata", .GlobalEnv)

@@ -770,6 +770,45 @@ return(output)
 ## Ensemble Methods, calculate RMSE of joint predictions. Weighted averaging of 2 base learners
 
 
+circos.test <- function(dat,x){
+a=sample(1:29,x)
+NN=dat[a,a]	# should ncol=nrow
+FF <- rownames(NN)
+xlim <- cbind(rep(0,nrow(NN)), apply(NN,2,function(x) sum(abs(x))-1))
+## prepare matrix
+colors <- 1:nrow(NN)
+par(mar=c(1,1,1,1))
+circos.initialize(factors=FF, xlim=xlim)
+circos.trackPlotRegion(ylim = c(0,1), factors=FF, bg.border = NA, panel.fun = function(x,y){
+	xlim=get.cell.meta.data("xlim")
+        current.sector.index=get.cell.meta.data("sector.index")
+	circos.text(mean(xlim), .85, labels=current.sector.index,adj=c(.5,.5))
+        i=get.cell.meta.data("sector.numeric.index")
+        circos.rect(min(xlim), 0, max(xlim), .25, col=colors[i])
+        })
+rn <- rownames(NN)
+sector.sum <- numeric(length(rn))
+for(i in 2:nrow(NN)){
+for(j in 1:(i-1)){
+	sector.index1 <- rn[i]
+        sector.index2 <- rn[j]
+        circos.link(sector.index1,
+                    c(sector.sum[i],sector.sum[i] + abs(opt[i,j])),
+                    sector.index2,
+                    c(sector.sum[j], sector.sum[j] + abs(opt[i,j])),
+                    col= ifelse(opt[i,j] > 0, "#FFA573","#5FD3B3"),
+                         border="grey")
+                    sector.sum[i]=sector.sum[i] + abs(opt[i,j])
+                    sector.sum[j]=sector.sum[j] + abs(opt[i,j])
+        }
+}
+circos.clear()
+}
+## Draw circos layouts for the setup III (only the csv) for paper 3
+
+
+
+
 
 
 

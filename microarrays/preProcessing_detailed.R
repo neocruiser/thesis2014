@@ -1,6 +1,3 @@
-=========================================================================
-#		SECTION --								#
-=========================================================================
 # ===================================================================================================
 # Preprocessing of time-course design of Mussel Larvae Mytilus edulis. Ph.D 2014. Agilent microarray
 # ===================================================================================================
@@ -32,6 +29,7 @@ abline(h=0, col="red", lty=2, lwd=1)
 }
 
 ## PLOT (2)
+v0=RG
 x11(); plotDensities(v0)
 graphics.off()
 
@@ -276,13 +274,12 @@ points(results$Vc1, results$T1, pch=19, cex=0.5, col="red")
 ## END
 # ===========
 
-#remove all objects
-rm(list=ls())
-
 setwd("C:/Dropbox/Workshop2013/Work/R/ANN")
 load("EnsembleMethods.Rdata", .GlobalEnv)
 lsos(pat="mRMR")
 ## Extract Locus coefficients for MMC
+## run dataset.R
+## load fit
 mrmr500 <- cust[cust$locus %in% locus_mRMR500, ]
 mrmr29 <- cust[cust$locus %in% locus_mRMR29,]
 # extract cust
@@ -299,18 +296,21 @@ dat29v3 <- dat29v2[! duplicated(dat29v2$locus),]; dim(dat29v3)
 ## prepare the trained lasso 29 DETs
 names(dat29v3)
 setwd("~/Downloads")
-write.csv(dat29v3[,c(5,2:4)], "setup5.MMC.29.csv",quote=F,row.names=F)
-## EXTRACT genes for MMC
+#write.csv(dat29v3[,c(5,2:4)], "setup5.MMC.29.csv",quote=F,row.names=F)
+## EXTRACT genes for MMC clustering (using the browser version of MMC)
 
 ## Prepare Table for LaTeX
-mmc29_output <- read.table("clipboard", sep=",", header=T)
+mmc29_output <- read.table("clipboard", sep=",", header=T); mmc29_output
 final.29 <- merge(dat29v3, mmc29_output, by.x = "locus",by.y = "Gene")
 final.29 <- final.29[order(final.29[,7]),]
 write.table(final.29[,c(1,6:10)],"locus29.txt",sep="\t",quote = F,row.names = F)
+require(xtable)
+x <- xtable(final.29[,c(1,6:7)])
+print(x,include.rownames=F)
 ## Extract filtered Locus to MMC
 
 ## Copy/paste the MMC tabulars from browser
-setup5 <- read.table("clipboard", sep=",", header=T)
+setup3 <- read.table("clipboard", sep=",", header=T)
 datAll <- merge(setup1, setup2, by = "Gene")
 dataAll <- data.frame(Gene=datAll[,1],setup1=datAll$Module.x,setup2=datAll$Module.y)
 dataAll2 <- data.frame(Gene=datAll[,1],setup3=datAll$Module.x,setup4=datAll$Module.y)
@@ -321,11 +321,16 @@ all.MMC <- merge(all.MMC,setup5[,1:2],by="Gene")
 all.MMC <- merge(dat29v3[,5:6],all.MMC,by.x = "locus",by.y = "Gene")
 require(xtable)
 x <- xtable(all.MMC)
-print(x,include.rownames=T)
+print(x,include.rownames=F)
 ## print LaTeX table
 
 require(lattice)
 xyplot(setup1+setup2+setup3+setup4+Module ~ as.numeric(rownames(all.MMC)), data=all.MMC, type=c("p","a","g"), ylab="MMC Clusters", xlab="Selected transcripts", pch=21, cex=1.5, auto.key = list(columns=5, title="Contrast",lines=T,points=F))
+## PLOT MMC genes per setup
+
+
+
+
 
 
 

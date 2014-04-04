@@ -6,10 +6,10 @@
 ========================
 
 ## load datasets
-setwd("C:/Dropbox/Workshop2013/Work/Paramètres Ecophysio/")
+setwd("C:/Workshop2014/Paramètres Ecophysio/")
 load("biometrics.Rdata", .GlobalEnv)
 lsos(pat="")
-
+source('c:/Dropbox/Workshop2013/Work/R/01funcs.R')
 windows(record=T)
 library(ggplot2)
 
@@ -48,6 +48,7 @@ summary(biometrics)
 
 growth <- biometrics[biometrics$Variable == "Growth",]
 growth <- growth[-c(1:3),]
+summary(growth)
 
 growth$Treatment <- factor(growth$Treatment,levels=c("Cocktail","Tiso"))
 require(nnet)
@@ -56,6 +57,7 @@ growth$Treatment <- class.ind(growth$Treatment)[,1]
 survival <- biometrics[biometrics$Variable == "Mortality",]
 survival$Stage <- factor(survival$Stage, levels = c("Trocophore","Veliger","Pediveliger","Juvenile"))
 survival$Treatment <- factor(survival$Treatment, levels = c("Cocktail","Tiso"))
+survival$Treatment <- class.ind(survival$Treatment)[,1]
 summary(survival)
 
 ## Make sure to load in the 01funcs.R
@@ -69,6 +71,7 @@ detach(growth)
 require(car)
 require(MASS)
 fit <- lm(Physio~DPF*Treatment, data = growth)
+summary(fit)
 contrasts(growth$Treatment)
 anova(fit)
 spreadLevelPlot(fit, main = "studentized residuals vs fitted values")
@@ -701,7 +704,7 @@ chisq.test(tbl)
 # Fatty acids dataset (no trocophore)
 
 ## load datasets
-setwd("C:/Dropbox/Workshop2013/Work/Paramètres Ecophysio/")
+setwd("C:/Workshop2014/Paramètres Ecophysio/")
 load("biometrics.Rdata", .GlobalEnv)
 lsos(pat=".*indices|fatty.*|neutral|biometrics")
 

@@ -1,89 +1,88 @@
-
-#########################################################################
-#																			SECTION -1-													#
-#########################################################################
 # ENRICHMENT ANALYSIS FROM( ALEXA2010TOPGO)
 # FIRST STEP - CREATE A GENE-TO-GO OBJECT (BY EXTRACTING GO-TO-GENE FROM BLAST2GO)
 # SECOND STEP - PREDEFINE A LIST OF INTERESTING GENES (LIBRARY 1)
 
-{					## Load L.Rdata
 setwd("C:/Dropbox/Workshop2013/Work/R/enrichment/")
 load("enrichment.Rdata", .GlobalEnv)
 lsos(pat="")
-}
+## Load L.Rdata
 
 library(topGO)
+x="GO2Locus_cc.txt"
+y=2		## cluster 1-12 ALL
 ## choose from BP ; MF ; CC
-x="GO2Locus_mf.txt"
-y=2							## cluster 1-12 ALL
-z=cluster11$x		## cluster 1-12 but only >0.7
 
 ## Build Custom GO annotation File from the 15000 annotated transcripts (Blast2GO annotations)
-{
 ## x is the file extracted from Blast2GO where every GOterm is associated to available genes
 setwd("C:/Dropbox/Workshop2013/Work/R/enrichment/")
 GO2geneID <- readMappings(x)
-str(head(GO2geneID))
+r(head(GO2geneID))
 ## Every Locus with its GO term
 geneID2GO <- inverseList(GO2geneID)
 str(head(geneID2GO))
 length(geneID2GO)		## number of transripts annotated
-}
+
+
+##########
+# Load libraries
+####################
 ## Extract Library 1 gene-to-GO
 ## OPTION 1 (all library 1)
 ## allSet_lm is Library 1
-{
 setwd("C:/Dropbox/Workshop2013/Work/R/sam/")
 all.set <- read.table("allSet_Lm.txt", sep="\t", header=T)
 str(head(all.set))
 dim(all.set)
-}
+
 ## OPTION 2 (only high membership genes of clusters of Library 1)
 ## Load all clusters from (last soft clustering for paper 2 w all.set)
-{					## Load SoftClustering Mfuzz package --- 12 clusters
+## Load SoftClustering Mfuzz package --- 12 clusters
 setwd("C:/Dropbox/Workshop2013/Work/R/sam/")
 load("clusters12_Lm.Rdata", .GlobalEnv)
 lsos(pat="cluster.*")
-}
+z=cluster11$x		## cluster 1-12 but only alpha >0.7
+
 ## OPTION 3 (All genes of the clusters of Library 1)
 lsos(pat="acor.*")
 ## OPTION 4 , ANOVA RESULTS
-{
 setwd("C:/Dropbox/Workshop2013/Work/R/ANOVA/")
 load("anova.Rdata", .GlobalEnv)
 lsos(pat="nova")
-}
 
-=======
+##########
 ## START
-=======
+####################
 ## choose which genes to consider
-{			## change BP - MF -C
+## change BP - MF -C
 geneNames <- names(geneID2GO)
 head(geneNames)
 length(geneNames)
-## choose :
-	#geneList <- factor(as.integer(geneNames %in% all.set[,1]))		## Library 1
-	#geneList <- factor(as.integer(geneNames %in% colnames(setAnova)))		## Anova
-	#geneList <- factor(as.integer(geneNames %in% acore_list01[[y]][,1]))		## all clustered genes
-	geneList <- factor(as.integer(geneNames %in% z))		## only genes w high membership values
+
+#geneList <- factor(as.integer(geneNames %in% all.set[,1]))		## Library 1
+#geneList <- factor(as.integer(geneNames %in% colnames(setAnova)))		## Anova
+#geneList <- factor(as.integer(geneNames %in% acore_list01[[y]][,1]))		## all clustered genes
+#geneList <- factor(as.integer(geneNames %in% z))		## only genes w high membership values
+## Choose Locus to GO map
+
 names(geneList) <- geneNames
 str(geneList)
-## Build TopGOdata object (before enrichment analysis
-GOdata <- new("topGOdata", description = "Library 1", ontology = "MF", allGenes = geneList, annot = annFUN.gene2GO, gene2GO=geneID2GO)
+GOdata <- new("topGOdata", description = "Library 1", ontology = "CC", allGenes = geneList, annot = annFUN.gene2GO, gene2GO=geneID2GO)
 GOdata
-}
-## compute tests
-{
+## Build TopGOdata object (before enrichment analysis
+
 resultFis <- runTest(GOdata, algorithm="classic", statistic="fisher")
 resultKS <- runTest(GOdata, algorithm="weight01", statistic="ks")
 result.elim <- runTest(GOdata, algorithm="elim", statistic="ks")
-}
-## Extract Results
-cluster12_fisher_alpha07 <- GenTable(GOdata, classicFisher=resultFis,orderBy="classicFisher",topNodes=14)
-cluster12_fisher_alpha07
-allRes <- GenTable(GOdata, classicFisher=resultFis, KS=resultKS, elimKS=result.elim ,orderBy="classicFisher",ranksOf="classicFisher",topNodes=20)
-allRes
+## compute tests
+
+Gomaps <- GenTable(GOdata, classicFisher=resultFis,orderBy="classicFisher",topNodes=20); Gomaps
+Gomaps <- GenTable(GOdata, classicFisher=resultFis, KS=resultKS, elimKS=result.elim ,orderBy="classicFisher",ranksOf="classicFisher",topNodes=20); Gomaps
+## Extract Results from 2 ranking mehtods
+
+require(xtable)
+x <- xtable(Gomaps)
+print(x,include.rownames=F)
+## Extract table
 
 ===============
 ## ADDITIONAL TOOLS
