@@ -226,7 +226,7 @@ name <- read.table("mev_name.txt", sep="\t", header=FALSE) #leave it false if no
 names(locus)
 names(name)
 ln <- merge(locus,name, by.x="locus", by.y="V1")
-write.table(ln, "annotations.txt", sep="\t", quote=F) # Only once
+write.table(ln, "annotations.txt", sep="\t", quote=F) # Only oncee
 
 
 ## Variable with each dataset
@@ -238,7 +238,7 @@ dtfm <- merge(means,names, by.x="name", by.y="CUST")
 write.table(dtfm, "means_binding.txt", sep="\t", quote=F)
 row.names(dtfm) <- dtfm$V2
 dtfm # this data frame contains all means with 1 column CUST and 1 column Names (true gene names)
-
+dim(dtfm)
 
 =============
   MEV ANOVAs
@@ -273,8 +273,15 @@ barplot(matrix(c(data.df$eggM,data.df$veliM,data.df$juvM), nr=30, ncol=3),
 legend("topleft", c("Egg","Veliger","Juvenil"), pch=15, col=c("red","green","blue"), bty="n")
 ###END
 
-
-
+rownames(data.df)
+dim(data.df)
+head(data.df)
+data.df$description <- rownames(data.df)
+mx <- melt(data.df[,-6],id.vars=6)
+head(mx)
+ggplot(mx, aes(x=description,y=value,fill=variable))+geom_bar(stat="identity")+
+    coord_flip()+theme_bw()
+#    geom_text(aes(label=paste(value,"%"),x=description,y=value))
 
 
 #########################################################################

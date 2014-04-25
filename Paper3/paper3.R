@@ -40,13 +40,6 @@ length(locus)
 ## extract LOCUS names
 ## Parallelized mRMR ensemble Feature selection
 
-## NO RUN
-mmcDat <- means[rownames(means) %in% locus,]
-names(mmcDat)
-setwd("~/Downloads")
-write.csv(mmcDat[,-c(1,2)], "MMC_locus_29.csv",quote=F)
-## Extract filtered Locus to MMC
-
 ##############################
 # Training/Testing
 ##############################
@@ -113,7 +106,7 @@ colnames(myanova) <- c(rep("L",9), rep("PL",6), rep("L",3),rep("PL",4))
 colnames(myanova) <- c(rep("None", 6), rep("Cocktail", 9), rep("Tiso",7))
 colnames(myanova) <- c(rep("E",3), rep("T",3), rep("VC",3),rep("PC",3),rep("JC",3),rep("VT",3),rep("PT",3), rep("JT",1))
 #rownames(myanova) <- paste(seq(1:nrow(mmcDat)),sep="-",mmcDat[,2])
-rownames(myanova) <- mmcDat[,1]
+rownames(myanova) <- rownames(mmcDat)
 head(myanova)
 mydataanova <- t(scale(t(myanova)))
 source("http://faculty.ucr.edu/~tgirke/Documents/R_BioCond/My_R_Scripts/my.colorFct.R")
@@ -241,22 +234,49 @@ plot(cumsum(pve), type="o",ylab = "Cumultive PVE", xlab = "Principal Component",
 ## (Unsupervised) Principal Componenent analysis (reduced dimension) (paper3)
 
 ##############################
+# ANOVA for 29 genes
+##############################
+
+dat <- t(mmcDat[,-c(1,2)])
+diet <- gl(3,9,27, label=c("No","Co","Ti"));diet <- diet[-c(7:9,26:27)];diet
+stages <- gl(5,3,28, label=c("E", "T", "V", "P", "J")); stages <- stages[-c(16:21)]; stages
+## prepare variables
+resDat <- NULL
+for(i in 1:ncol(dat)){
+test <- data.frame(gene=dat[,i],diet,stages)
+resDat <- rbind(resDat, coefficients(aov(gene~diet+stages+diet*stages,test)))
+}
+## compute residuals for manova
+rownames(resDat) <- colnames(dat)
+setwd("C:/Workshop2014/Paper3")
+write.csv(resDat, "29residuals.csv",quote=F)
+## extract and save
+
+##############################
 # Circos
 ##############################
-setwd("~/Downloads")
+setwd("C:/workshop2014/Paper3")
 #save(list=ls(pattern="locus|opt|setup|mmc"),file="circos_MS3.Rdata")	## save
 load("circos_MS3.Rdata", .GlobalEnv)
 lsos(pat="locus|opt|setup|mmc")
 
 require(circlize)
-circos.test(optS3,5)
-## optS3= all correlations of setup III from the MMC csv file
-## 5= number of genes to be ploted
+circos.test(mmcCorr,5)
+## plot correlations for 5 genes
 
+## old
+circos.test(optS3,5)
+## optS3= all correlations of setup III from the MMC output file
+## 5= number of genes to be ploted
 
 ##############################
 # Tryouts
 ##############################
+
+rats <- data.frame(id = paste0("rat",1:10),
+  sex = factor(rep(c("female","male"),each=5)),
+  weight = c(2,4,1,11,18,12,7,12,19,20),
+  length = c(100,105,115,130,95,150,165,180,190,175))
 
 ## working
 mat <- t(optall[1:3,1:5,drop=F])

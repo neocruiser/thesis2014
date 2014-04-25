@@ -279,6 +279,14 @@ load("EnsembleMethods.Rdata", .GlobalEnv)
 lsos(pat="mRMR")
 ## Extract Locus coefficients for MMC
 ## run dataset.R
+#merge cust + name===============================
+setwd("C:/Dropbox/Workshop2013/Work/R/datasets/")
+id <- read.table("id2.txt", sep="\t", header=T); dim(id)			## All printed probes
+exportID <- read.table("Locus2ID.txt", sep="\t", header=T); dim(exportID)			## only annotated sequences
+#exportID <- read.table("Locus2ID50k.txt", sep="\t", header=T)			## All sequences PAPer3
+# only annotated sequences (non annot are discarded)
+cust <- merge(id,exportID); dim(cust); names(cust)
+cust <- cust[!duplicated(cust),]; dim(cust)
 ## load fit
 mrmr500 <- cust[cust$locus %in% locus_mRMR500, ]
 mrmr29 <- cust[cust$locus %in% locus_mRMR29,]
