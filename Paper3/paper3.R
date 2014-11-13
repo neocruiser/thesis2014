@@ -1,8 +1,8 @@
 ##############################
 #    Paper 3
 ##############################
-source('c:/Dropbox/Workshop2013/Work/R/01funcs.R')
-setwd("C:\\Dropbox\\Workshop2013\\Work\\R\\datasets\\weights\\")
+source('c:/Dropbox/R/01funcs.R')
+setwd("C:\\Dropbox\\R\\datasets\\weights\\")
 #means <- read.table("meansAllPredictors.txt", sep="\t", header=T, row.names=3) ## 23 samples 50 K
 #means <- read.table("means23samples15K.txt", sep="\t", header=T, row.names=3) ## 23 samples (all of them) 15K
 means <- read.table("means22samples15K.txt", sep="\t", header=T, row.names=3) ## 22 samples 15K (without Juvenile Tiso replicate 1)
@@ -19,6 +19,8 @@ y <- c(rep("L",9), rep("PL",6), rep("L",3),rep("PL",4))
 ## prepare output (response varaible for only 22 samples JT1 has been excluded from analysis due to unadequate detection rules)
 ## prepare response variable (paper3)
 
+
+
 ##############################
 # Filter subset selection
 ##############################
@@ -26,6 +28,8 @@ hi.x <- set.var(x,1,2000)
 range(apply(hi.x, 2, var))
 cor.x <- cor(hi.x); summary(cor.x[upper.tri(cor.x)])
 ## Unsupervised gene selection based on high variance (paper3)
+
+
 
 require(mRMRe)
 feature.select <- new("mRMRe.Data",data=data.frame(hi.x[,1:1500, drop=F])); gc()
@@ -153,7 +157,8 @@ xyplot(Gene1 + Gene2 + Gene3 + Gene4 + Gene5~Model, data=modelsRMSE, type=c("a",
 ## plot genes 1 to 5 from mRMR
 xyplot(subset1 + subset2 + subset3 + subset4 ~Model, data=modelsRMSE, type=c("a","p"), pch =21,cex = 1.5,auto.key = list(columns=4,points=F,lines=T,title='Correlated subgenes'),ylab = "Root-mean-square error (RMSE)",xlab="Tested base Learners")
 ## plot subset trees to gene1 from mRMR
-xyplot(iter100 + iter200 + iter600 + iter1000 + iter2000 + iter5000 ~ Model, data=modelsRMSE, type=c("a","p"),pch=20,cex=1,auto.key = list(space="top",points=F,lines=T),ylab = "Bagging Iterations",xlab="Tested base Learners")
+xyplot(iter100 + iter200 + iter600 + iter1000 + iter2000 + iter5000 ~ Model, data=modelsRMSE, type=c("a","p"),pch=20,cex=1,auto.key = list(space="top",points=F,lines=T),ylab = "Bagging Iteration
+s",xlab="Tested base Learners")
 ## plot bagging iteration RMSEs for base learners
 xyplot(iter100 + iter200 + iter600 + iter1000 + iter2000 + iter5000 ~ Model, data=modelsRMSE, type=c("a","p"),cex=1,lty=1, auto.key = list(columns=6,points=T,lines=F,title="Number of iterations"),ylab = "System iteration time (s)",xlab="Tested base Learners")
 ## plot bagging run time RMSEs for base learners
@@ -248,7 +253,7 @@ resDat <- rbind(resDat, coefficients(aov(gene~diet+stages+diet*stages,test)))
 }
 ## compute residuals for manova
 rownames(resDat) <- colnames(dat)
-setwd("C:/Workshop2014/Paper3")
+asetwd("C:/Workshop2014/Paper3")
 write.csv(resDat, "29residuals.csv",quote=F)
 ## extract and save
 

@@ -1023,7 +1023,7 @@ lasso.coef[lasso.coef!=0]
 ## lasso (shrinkage)
 
 x <- rnorm(100)
-y <- 5+2x-4x2
+y <- 5 + 2*x-4*x^2
 fit <- lm(y~x)
 plot(y~x, col="chocolate",pch=20)
 abline(fit,col="forestgreen",lwd=2)

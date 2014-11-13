@@ -2,7 +2,7 @@
 # FIRST STEP - CREATE A GENE-TO-GO OBJECT (BY EXTRACTING GO-TO-GENE FROM BLAST2GO)
 # SECOND STEP - PREDEFINE A LIST OF INTERESTING GENES (LIBRARY 1)
 
-setwd("C:/Dropbox/Workshop2013/Work/R/enrichment/")
+setwd("C:/Dropbox/R/enrichment/")
 load("enrichment.Rdata", .GlobalEnv)
 lsos(pat="")
 ## Load L.Rdata
@@ -14,9 +14,9 @@ y=2		## cluster 1-12 ALL
 
 ## Build Custom GO annotation File from the 15000 annotated transcripts (Blast2GO annotations)
 ## x is the file extracted from Blast2GO where every GOterm is associated to available genes
-setwd("C:/Dropbox/Workshop2013/Work/R/enrichment/")
+setwd("C:/Dropbox/R/enrichment/")
 GO2geneID <- readMappings(x)
-r(head(GO2geneID))
+str(head(GO2geneID))
 ## Every Locus with its GO term
 geneID2GO <- inverseList(GO2geneID)
 str(head(geneID2GO))
