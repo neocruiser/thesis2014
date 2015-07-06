@@ -4,6 +4,67 @@
 ## load with C-c C-l in emacs before sessions
 
 
+## Bagging for Ensemble Learning
+## Bootstrap aggregation (Bagging) + 1 classifier = RMSE
+bagging <- function(training, testing, m=10, ite=2, methods,tune=5){
+	lapsed <- system.time(Predd <- foreach(i=1:ite,.combine=cbind,.packages='caret') %dopar% {
+		bagging.index <- sample(1:dim(training)[1], size=floor((nrow(training)/m)))	## vector list
+		Train.me <- train(y~.,
+                                                       data=training[bagging.index,],
+                                                       method=methods,
+                                                       trControl=trainControl(method="repeatedcv",number=10,repeats=5),
+                                                       tuneLength=tune,
+                                                       preProc=c("center","scale"))
+	predict(Train.me, newdata=testing,type="raw")
+})
+        predicted <- rowMeans(Predd)
+	RMSE <- mean((predicted - testing[,1])^2)		## Test set MSE for regression
+        output <- list(Time.Lapsed=lapsed,Predicted.Raw.data=predicted,RMSE=RMSE)
+        return(output)
+}
+
+## Bagging for Ensemble Learning
+## Bootstrap aggregation (Bagging) + 1 classifier = RMSE
+baggingTune <- function(training, testing, m=10, ite=2, methods,tune=5,gridZ){
+	lapsed <- system.time(Predd <- foreach(i=1:ite,.combine=cbind,.packages='caret') %dopar% {
+		bagging.index <- sample(1:dim(training)[1], size=floor((nrow(training)/m)))	## vector list
+		Train.me <- train(y~.,
+                                                       data=training[bagging.index,],
+                                                       method=methods,
+                                                       trControl=trainControl(method="repeatedcv",number=10,repeats=5),
+                                                       tuneLength=tune,
+                                                       tuneGrid=gridZ,
+                                                       preProc=c("center","scale"))
+	predict(Train.me, newdata=testing,type="raw")
+})
+        predicted <- rowMeans(Predd)
+	RMSE <- mean((predicted - testing[,1])^2)		## Test set MSE for regression
+        output <- list(Time.Lapsed=lapsed,Predicted.Raw.data=predicted,RMSE=RMSE)
+        return(output)
+}
+
+## Bagging for Ensemble Learning
+## Bootstrap aggregation (Bagging) + 1 classifier = RMSE
+bagging.clas <- function(training, testing, m=10, ite=2, methods,tune=5){
+	lapsed <- system.time(Predd <- foreach(i=1:ite,.combine=cbind,.packages=c('caret','caTools')) %dopar% {
+		bagging.index <- sample(1:dim(training)[1], size=floor((nrow(training)/m)))	## vector list
+		timed <- system.time(Train.me <- train(y~.,
+                                                       data=training[bagging.index,],
+                                                       method=methods,
+                                                       trControl=trainControl(method="repeatedcv",
+                                                       number=10,repeats=5, classProbs=T, summaryFunction=twoClassSummary),
+                                                       tuneLength=tune,
+                                                       metric="ROC",
+                                                       preProc=c("center","scale")))
+	predict(Train.me, newdata=testing,type="raw")
+})
+        predicted <- rowMeans(Predd)
+        conf.mat <- confusionMatrix(data=predicted, dat[test,1])	## confusion matrix for classification
+        output <- list(TimedModel=timed,TimedBagging=lapsedy,ConfusionMatrix=conf.mat)
+        return(output)
+}
+
+
 ## EBDBN
 ## FUNCTION THAT TAKE THE ZSCORES $Z AND CREATE A BINARY MATRIX WITH 1 AND -1 FOR UP AND DOWN REGULATED DET FOR 0.99 THRESHOLD
 net2Bin <- function(x){
@@ -44,69 +105,8 @@ visualizeNet<- function (zscores, sig, type = "feedback")  {
 
 
 
-## Bagging for Ensemble Learning
-## Bootstrap aggregation (Bagging) + 1 classifier = RMSE
-## source : (http://tinyurl.com/ljt9f78)
-bagging <- function(training, testing, m=10, ite=2, methods,tune=5){
-	lapsed <- system.time(Predd <- foreach(i=1:ite,.combine=cbind,.packages='caret') %dopar% {
-		bagging.index <- sample(1:dim(training)[1], size=floor((nrow(training)/m)))	## vector list
-		Train.me <- train(y~.,
-                                                       data=training[bagging.index,],
-                                                       method=methods,
-                                                       trControl=trainControl(method="repeatedcv",number=10,repeats=5),
-                                                       tuneLength=tune,
-                                                       preProc=c("center","scale"))
-	predict(Train.me, newdata=testing,type="raw")
-})
-        predicted <- rowMeans(Predd)
-	RMSE <- mean((predicted - testing[,1])^2)		## Test set MSE for regression
-        output <- list(Time.Lapsed=lapsed,Predicted.Raw.data=predicted,RMSE=RMSE)
-        return(output)
-}
-
-## Bagging for Ensemble Learning
-## Bootstrap aggregation (Bagging) + 1 classifier = RMSE
-## source : (http://tinyurl.com/ljt9f78)
-baggingTune <- function(training, testing, m=10, ite=2, methods,tune=5,gridZ){
-	lapsed <- system.time(Predd <- foreach(i=1:ite,.combine=cbind,.packages='caret') %dopar% {
-		bagging.index <- sample(1:dim(training)[1], size=floor((nrow(training)/m)))	## vector list
-		Train.me <- train(y~.,
-                                                       data=training[bagging.index,],
-                                                       method=methods,
-                                                       trControl=trainControl(method="repeatedcv",number=10,repeats=5),
-                                                       tuneLength=tune,
-                                                       tuneGrid=gridZ,
-                                                       preProc=c("center","scale"))
-	predict(Train.me, newdata=testing,type="raw")
-})
-        predicted <- rowMeans(Predd)
-	RMSE <- mean((predicted - testing[,1])^2)		## Test set MSE for regression
-        output <- list(Time.Lapsed=lapsed,Predicted.Raw.data=predicted,RMSE=RMSE)
-        return(output)
-}
 
 
-## Bagging for Ensemble Learning
-## Bootstrap aggregation (Bagging) + 1 classifier = RMSE
-## source : (http://tinyurl.com/ljt9f78)
-bagging.clas <- function(training, testing, m=10, ite=2, methods,tune=5){
-	lapsed <- system.time(Predd <- foreach(i=1:ite,.combine=cbind,.packages=c('caret','caTools')) %dopar% {
-		bagging.index <- sample(1:dim(training)[1], size=floor((nrow(training)/m)))	## vector list
-		timed <- system.time(Train.me <- train(y~.,
-                                                       data=training[bagging.index,],
-                                                       method=methods,
-                                                       trControl=trainControl(method="repeatedcv",
-                                                       number=10,repeats=5, classProbs=T, summaryFunction=twoClassSummary),
-                                                       tuneLength=tune,
-                                                       metric="ROC",
-                                                       preProc=c("center","scale")))
-	predict(Train.me, newdata=testing,type="raw")
-})
-        predicted <- rowMeans(Predd)
-        conf.mat <- confusionMatrix(data=predicted, dat[test,1])	## confusion matrix for classification
-        output <- list(TimedModel=timed,TimedBagging=lapsedy,ConfusionMatrix=conf.mat)
-        return(output)
-}
 
 
 ## source : http://tinyurl.com/lo53qls
