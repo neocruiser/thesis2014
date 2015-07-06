@@ -42,15 +42,16 @@ require(pvclust)
 require(gplots)
 
 ## load sets
-setwd("C:/Dropbox/Workshop2013/Work/R/ANOVA/")
+setwd("~/data/Dropbox/marineR/ANOVA/")
 load("anova.Rdata", .GlobalEnv)
 lsos(pat="nova")
 ## set NxN
 NxN = setAnova
-
+head(NxN)
 myanova <- t(NxN)
 mydataanova <- t(scale(t(myanova)))
 source("http://faculty.ucr.edu/~tgirke/Documents/R_BioCond/My_R_Scripts/my.colorFct.R")
+head(mydataanova)
 hra <- hclust(as.dist(1-cor(t(mydataanova), method="pearson")), method="complete") ## ROWS (genes)
 hca <- hclust(as.dist(1-cor(mydataanova, method="pearson")), method="complete")	## COL (samples)
 heatmap(myanova, Rowv=as.dendrogram(hra), Colv=as.dendrogram(hca), col=my.colorFct(), scale="row")
